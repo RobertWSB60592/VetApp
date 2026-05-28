@@ -1,0 +1,352 @@
+@page "/"
+@inject AppState AppState
+@inject IPetApiService PetApi
+@inject IVisitApiService VisitApi
+@inject NavigationManager Nav
+
+<div class="home-page">
+    <div class="header">
+        <div>
+            <h1 class="greeting">Cześć, @FirstName! 👋</h1>
+            <p class="sub">Co słychać u twoich pupili?</p>
+        </div>
+        <div class="avatar">@FirstName.Substring(0, 1)</div>
+    </div>
+
+    @if (loading)
+    {
+        <LoadingSpinner />
+    }
+    else
+    {
+        <section class="section">
+            <div class="section-header">
+                <span class="section-title">Twoje zwierzaki</span>
+                <a href="/pets" class="see-all">Zobacz wszystkie</a>
+            </div>
+            <div class="pets-scroll">
+                @foreach (var pet in pets)
+                {
+                    var petId = pet.Id;
+                    <PetCard Pet="pet" OnClick="EventCallback.Factory.Create(this, () => Nav.NavigateTo(PetRoute(petId)))" @key="pet.Id" />
+                }
+                <div class="add-card" @onclick='() => Nav.NavigateTo("/pets/add")'>
+                    <span class="add-icon">+</span>
+                    <span class="add-label">Dodaj</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <span class="section-title">Nadchodzące wizyty</span>
+                <button class="btn-new" @onclick='() => Nav.NavigateTo("/book-visit")'>+ Nowa wizyta</button>
+            </div>
+
+            @if (upcomingVisits.Count == 0)
+            {
+                <div class="empty-card">
+                    <span class="empty-icon">📅</span>
+                    <span>Brak zaplanowanych wizyt</span>
+                    <button class="btn-primary-sm" @onclick='() => Nav.NavigateTo("/book-visit")'>Umów wizytę</button>
+                </div>
+            }
+            else
+            {
+                @foreach (var v in upcomingVisits)
+                {
+                    <div class="visit-card" @key="v.Id">
+                        <div class="visit-dot" style="background:@VisitColor(v.Type)"></div>
+                        <div class="visit-info">
+                            <div class="visit-title">@v.PetName — @VisitLabel(v.Type)</div>
+                            <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM, HH:mm") · @v.DoctorName</div>
+                        </div>
+                        <span class="visit-badge">@StatusLabel(v.Status)</span>
+                    </div>
+                }
+            }
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <span class="section-title">Ostatnie wizyty</span>
+                <a href="/history" class="see-all">Historia</a>
+            </div>
+            @foreach (var v in recentVisits)
+            {
+                <div class="visit-card" @key="v.Id">
+                    <div class="visit-dot" style="background:@VisitColor(v.Type)"></div>
+                    <div class="visit-info">
+                        <div class="visit-title">@v.PetName — @VisitLabel(v.Type)</div>
+                        <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy") · @v.DoctorName</div>
+                    </div>
+                </div>
+            }
+            @if (recentVisits.Count == 0)
+            {
+                <p class="muted-text">Brak historii wizyt.</p>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private List<PetDto> pets = new();
+    private List<VisitDto> upcomingVisits = new();
+    private List<VisitDto> recentVisits = new();
+    private bool loading = true;
+
+    private string FirstName => AppState.CurrentOwner?.FullName?.Split(' ')[0] ?? "Użytkowniku";
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try
+        {
+            var petTask = PetApi.GetPetsAsync();
+            var visitTask = VisitApi.GetVisitsAsync();
+            await Task.WhenAll(petTask, visitTask);
+
+            pets = petTask.Result;
+            var allVisits = visitTask.Result;
+            var now = DateTime.Now;
+
+            upcomingVisits = allVisits
+                .Where(v => v.ScheduledAt > now && v.Status == VetMed.Shared.Enums.VisitStatus.Zaplanowana)
+                .OrderBy(v => v.ScheduledAt)
+                .ToList();
+
+            recentVisits = allVisits
+                .Where(v => v.ScheduledAt <= now)
+                .OrderByDescending(v => v.ScheduledAt)
+                .Take(3)
+                .ToList();
+        }
+        catch { }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private static string PetRoute(int id) => $"/pets/{id}";
+
+    private static string VisitColor(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "#F5C842",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
+        VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
+        _                                          => "#6FCFB0"
+    };
+
+    private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "Szczepienie",
+        VetMed.Shared.Enums.VisitType.Kontrola    => "Kontrola",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "Zabieg",
+        VetMed.Shared.Enums.VisitType.Nagly       => "Nagły",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "Diagnostyka",
+        _                                          => t.ToString()
+    };
+
+    private static string StatusLabel(VetMed.Shared.Enums.VisitStatus s) => s switch
+    {
+        VetMed.Shared.Enums.VisitStatus.Zaplanowana  => "Zaplanowana",
+        VetMed.Shared.Enums.VisitStatus.Potwierdzona => "Potwierdzona",
+        VetMed.Shared.Enums.VisitStatus.Zakonczona   => "Zakończona",
+        VetMed.Shared.Enums.VisitStatus.Odwolana     => "Odwołana",
+        _                                             => s.ToString()
+    };
+}
+
+<style>
+    .home-page {
+        padding: 20px 16px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 8px;
+    }
+
+    .greeting {
+        font-size: 22px;
+        font-weight: 800;
+        color: #E8F5F2;
+    }
+
+    .sub {
+        font-size: 13px;
+        color: rgba(232,245,242,0.6);
+        margin-top: 2px;
+    }
+
+    .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(111,207,176,0.2);
+        border: 1px solid rgba(111,207,176,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 700;
+        color: #6FCFB0;
+        flex-shrink: 0;
+    }
+
+    .section {}
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #E8F5F2;
+    }
+
+    .see-all {
+        font-size: 13px;
+        color: #6FCFB0;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .btn-new {
+        background: rgba(111,207,176,0.15);
+        border: 1px solid rgba(111,207,176,0.3);
+        color: #6FCFB0;
+        border-radius: 10px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .pets-scroll {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+    }
+
+    .pets-scroll::-webkit-scrollbar { display: none; }
+
+    .add-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px dashed rgba(111,207,176,0.3);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        min-width: 90px;
+        min-height: 110px;
+        flex-shrink: 0;
+        transition: border-color 0.2s;
+    }
+
+    .add-card:active { transform: scale(0.97); }
+
+    .add-icon {
+        font-size: 28px;
+        color: rgba(111,207,176,0.6);
+    }
+
+    .add-label {
+        font-size: 12px;
+        color: rgba(232,245,242,0.5);
+    }
+
+    .visit-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(111,207,176,0.15);
+        border-radius: 14px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .visit-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .visit-info { flex: 1; }
+
+    .visit-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #E8F5F2;
+    }
+
+    .visit-meta {
+        font-size: 12px;
+        color: rgba(232,245,242,0.55);
+        margin-top: 2px;
+    }
+
+    .visit-badge {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6FCFB0;
+        background: rgba(111,207,176,0.12);
+        border-radius: 8px;
+        padding: 3px 8px;
+        white-space: nowrap;
+    }
+
+    .empty-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px dashed rgba(111,207,176,0.2);
+        border-radius: 16px;
+        padding: 28px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        color: rgba(232,245,242,0.5);
+        font-size: 14px;
+    }
+
+    .empty-icon { font-size: 32px; }
+
+    .btn-primary-sm {
+        background: #6FCFB0;
+        color: #0D1F1C;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 700;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 4px;
+    }
+
+    .muted-text {
+        font-size: 13px;
+        color: rgba(232,245,242,0.45);
+        text-align: center;
+        padding: 16px 0;
+    }
+</style>

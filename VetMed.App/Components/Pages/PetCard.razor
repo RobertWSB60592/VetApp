@@ -1,0 +1,424 @@
+@page "/pets/{Id:int}"
+@inject IPetApiService PetApi
+@inject IVisitApiService VisitApi
+@inject NavigationManager Nav
+
+<div class="pet-card-page">
+    @if (loading)
+    {
+        <LoadingSpinner />
+    }
+    else if (pet is null)
+    {
+        <div class="not-found">
+            <p>Nie znaleziono zwierzaka.</p>
+            <button class="btn-back" @onclick='() => Nav.NavigateTo("/pets")'>Wróć</button>
+        </div>
+    }
+    else
+    {
+        <div class="hero">
+            <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>&#8592;</button>
+            <div class="hero-emoji">@SpeciesEmoji(pet.Species)</div>
+            <h1 class="hero-name">@pet.Name</h1>
+            <div class="hero-tags">
+                <span class="hero-tag">@SpeciesLabel(pet.Species)</span>
+                @if (!string.IsNullOrEmpty(pet.Breed))
+                {
+                    <span class="hero-tag">@pet.Breed</span>
+                }
+                <span class="hero-tag mint">@PetAge(pet.Born)</span>
+            </div>
+        </div>
+
+        <div class="tabs-bar">
+            <button class="tab @(activeTab == 0 ? "active" : "")" @onclick="() => activeTab = 0">Opis</button>
+            <button class="tab @(activeTab == 1 ? "active" : "")" @onclick="() => activeTab = 1">Wizyty</button>
+            <button class="tab @(activeTab == 2 ? "active" : "")" @onclick="() => activeTab = 2">Szczepienia</button>
+        </div>
+
+        <div class="tab-content">
+            @if (activeTab == 0)
+            {
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label">Gatunek</span>
+                        <span class="info-value">@SpeciesLabel(pet.Species)</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(pet.Breed))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Rasa</span>
+                            <span class="info-value">@pet.Breed</span>
+                        </div>
+                    }
+                    @if (pet.WeightKg.HasValue)
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Waga</span>
+                            <span class="info-value">@pet.WeightKg kg</span>
+                        </div>
+                    }
+                    <div class="info-row">
+                        <span class="info-label">Data urodzin</span>
+                        <span class="info-value">@pet.Born.ToString("dd.MM.yyyy")</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Wiek</span>
+                        <span class="info-value">@PetAge(pet.Born)</span>
+                    </div>
+                </div>
+            }
+            else if (activeTab == 1)
+            {
+                @if (visitsLoading)
+                {
+                    <LoadingSpinner />
+                }
+                else if (petVisits.Count == 0)
+                {
+                    <p class="empty-msg">Brak wizyt.</p>
+                }
+                else
+                {
+                    @foreach (var v in petVisits)
+                    {
+                        <div class="visit-row" @key="v.Id">
+                            <div class="visit-dot" style="background:@VisitColor(v.Type)"></div>
+                            <div class="visit-details">
+                                <div class="visit-type">@VisitLabel(v.Type)</div>
+                                <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy, HH:mm") · @v.DoctorName</div>
+                            </div>
+                            <span class="status-badge">@StatusLabel(v.Status)</span>
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                @if (visitsLoading)
+                {
+                    <LoadingSpinner />
+                }
+                else
+                {
+                    var vaccines = petVisits.Where(v => v.Type == VetMed.Shared.Enums.VisitType.Szczepienie).ToList();
+                    @if (vaccines.Count == 0)
+                    {
+                        <p class="empty-msg">Brak szczepień.</p>
+                    }
+                    else
+                    {
+                        @foreach (var v in vaccines)
+                        {
+                            <div class="visit-row" @key="v.Id">
+                                <div class="visit-dot" style="background:#F5C842"></div>
+                                <div class="visit-details">
+                                    <div class="visit-type">Szczepienie</div>
+                                    <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy") · @v.DoctorName</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+            }
+        </div>
+
+        <div class="cta-wrap">
+            <button class="btn-primary" @onclick='() => Nav.NavigateTo($"/book-visit?petId={Id}")'>
+                Umów wizytę
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private PetDto? pet;
+    private List<VisitDto> petVisits = new();
+    private int activeTab;
+    private bool loading = true;
+    private bool visitsLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try { pet = await PetApi.GetPetAsync(Id); }
+        catch { }
+        finally { loading = false; }
+
+        visitsLoading = true;
+        try { petVisits = await VisitApi.GetVisitsByPetAsync(Id); }
+        catch { }
+        finally { visitsLoading = false; }
+    }
+
+    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
+    {
+        VetMed.Shared.Enums.Species.Kot    => "🐱",
+        VetMed.Shared.Enums.Species.Pies   => "🐶",
+        VetMed.Shared.Enums.Species.Krolik => "🐰",
+        VetMed.Shared.Enums.Species.Ptak   => "🐦",
+        _                                  => "🐾"
+    };
+
+    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
+    {
+        VetMed.Shared.Enums.Species.Pies   => "Pies",
+        VetMed.Shared.Enums.Species.Kot    => "Kot",
+        VetMed.Shared.Enums.Species.Krolik => "Królik",
+        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
+        _                                  => "Inne"
+    };
+
+    private static string PetAge(DateOnly born)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var months = (today.Year - born.Year) * 12 + today.Month - born.Month;
+        if (today.Day < born.Day) months--;
+        if (months < 12) return $"{months} mies.";
+        var years = months / 12;
+        return years == 1 ? "1 rok" : $"{years} lat";
+    }
+
+    private static string VisitColor(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "#F5C842",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
+        VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
+        _                                          => "#6FCFB0"
+    };
+
+    private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "Szczepienie",
+        VetMed.Shared.Enums.VisitType.Kontrola    => "Kontrola",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "Zabieg",
+        VetMed.Shared.Enums.VisitType.Nagly       => "Nagły",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "Diagnostyka",
+        _                                          => t.ToString()
+    };
+
+    private static string StatusLabel(VetMed.Shared.Enums.VisitStatus s) => s switch
+    {
+        VetMed.Shared.Enums.VisitStatus.Zaplanowana  => "Zaplanowana",
+        VetMed.Shared.Enums.VisitStatus.Potwierdzona => "Potwierdzona",
+        VetMed.Shared.Enums.VisitStatus.Zakonczona   => "Zakończona",
+        VetMed.Shared.Enums.VisitStatus.Odwolana     => "Odwołana",
+        _                                             => s.ToString()
+    };
+}
+
+<style>
+    .pet-card-page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    .hero {
+        background: linear-gradient(180deg, rgba(111,207,176,0.12) 0%, transparent 100%);
+        padding: 20px 20px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .back-btn {
+        position: absolute;
+        left: 16px;
+        top: 20px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 10px;
+        color: #E8F5F2;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-emoji { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+
+    .hero-name {
+        font-size: 26px;
+        font-weight: 800;
+        color: #E8F5F2;
+        margin-bottom: 10px;
+    }
+
+    .hero-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .hero-tag {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 4px 12px;
+        font-size: 12px;
+        color: rgba(232,245,242,0.8);
+    }
+
+    .hero-tag.mint {
+        background: rgba(111,207,176,0.15);
+        color: #6FCFB0;
+    }
+
+    .tabs-bar {
+        display: flex;
+        gap: 0;
+        background: rgba(255,255,255,0.04);
+        margin: 0 16px;
+        border-radius: 12px;
+        padding: 4px;
+        border: 1px solid rgba(111,207,176,0.15);
+    }
+
+    .tab {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: rgba(232,245,242,0.55);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 8px 4px;
+        border-radius: 9px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+    }
+
+    .tab.active {
+        background: rgba(111,207,176,0.2);
+        color: #6FCFB0;
+    }
+
+    .tab-content {
+        padding: 16px;
+        flex: 1;
+    }
+
+    .info-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(111,207,176,0.15);
+        border-radius: 16px;
+        padding: 4px 0;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+        font-size: 14px;
+        color: rgba(232,245,242,0.55);
+    }
+
+    .info-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #E8F5F2;
+    }
+
+    .visit-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(111,207,176,0.12);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+    }
+
+    .visit-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .visit-details { flex: 1; }
+
+    .visit-type {
+        font-size: 14px;
+        font-weight: 600;
+        color: #E8F5F2;
+    }
+
+    .visit-meta {
+        font-size: 12px;
+        color: rgba(232,245,242,0.5);
+        margin-top: 2px;
+    }
+
+    .status-badge {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6FCFB0;
+        background: rgba(111,207,176,0.12);
+        border-radius: 8px;
+        padding: 3px 8px;
+        white-space: nowrap;
+    }
+
+    .empty-msg {
+        text-align: center;
+        color: rgba(232,245,242,0.45);
+        font-size: 14px;
+        padding: 32px 0;
+    }
+
+    .cta-wrap {
+        padding: 12px 16px 20px;
+    }
+
+    .btn-primary {
+        background: #6FCFB0;
+        color: #0D1F1C;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-weight: 700;
+        font-size: 15px;
+        width: 100%;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-primary:active { transform: scale(0.98); }
+
+    .not-found {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 60px 20px;
+        color: rgba(232,245,242,0.6);
+    }
+
+    .btn-back {
+        background: rgba(111,207,176,0.15);
+        border: 1px solid rgba(111,207,176,0.3);
+        color: #6FCFB0;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>

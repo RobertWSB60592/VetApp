@@ -1,0 +1,6 @@
+@VetMed.Api_HostAddress = http://localhost:5148
+
+GET {{VetMed.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

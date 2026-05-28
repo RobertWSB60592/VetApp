@@ -1,0 +1,297 @@
+@page "/pets/add"
+@inject IPetApiService PetApi
+@inject NavigationManager Nav
+
+<div class="add-pet-page">
+    <div class="page-header">
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>&#8592;</button>
+        <h1 class="page-title">Dodaj zwierzaka</h1>
+    </div>
+
+    @if (success)
+    {
+        <div class="success-screen">
+            <div class="success-emoji">✅</div>
+            <h2 class="success-title">Dodano @addedName!</h2>
+            <p class="success-sub">Profil zwierzaka jest gotowy</p>
+            <button class="btn-primary" @onclick="GoToProfile">Przejdź do profilu</button>
+        </div>
+    }
+    else
+    {
+        <div class="form-wrap">
+            <div class="field">
+                <label>Imię <span class="required">*</span></label>
+                <input type="text" @bind="name" placeholder="np. Ozzy" />
+            </div>
+
+            <div class="field">
+                <label>Gatunek <span class="required">*</span></label>
+                <div class="chips">
+                    @foreach (var s in Enum.GetValues<VetMed.Shared.Enums.Species>())
+                    {
+                        var sv = s;
+                        <button class="chip @(species == sv ? "active" : "")" @onclick="() => species = sv" @key="sv">
+                            @SpeciesEmoji(sv) @SpeciesLabel(sv)
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Rasa</label>
+                <input type="text" @bind="breed" placeholder="np. Labrador" />
+            </div>
+
+            <div class="field">
+                <label>Waga (kg)</label>
+                <input type="number" @bind="weight" placeholder="np. 4.5" min="0" max="200" step="0.1" />
+            </div>
+
+            <div class="field">
+                <label>Data urodzin <span class="required">*</span></label>
+                <input type="date" @bind="born" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <div class="error-msg">@error</div>
+            }
+
+            <button class="btn-primary" @onclick="SubmitAsync" disabled="@(loading || string.IsNullOrWhiteSpace(name))">
+                @if (loading)
+                {
+                    <span>Dodawanie...</span>
+                }
+                else
+                {
+                    <span>Dodaj zwierzaka</span>
+                }
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    private string name = "";
+    private VetMed.Shared.Enums.Species? species;
+    private string? breed;
+    private decimal? weight;
+    private DateTime born = DateTime.Today.AddYears(-1);
+    private string? error;
+    private bool loading;
+    private bool success;
+    private string addedName = "";
+    private int addedId;
+
+    private async Task SubmitAsync()
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            error = "Podaj imię zwierzaka.";
+            return;
+        }
+        if (species is null)
+        {
+            error = "Wybierz gatunek.";
+            return;
+        }
+
+        loading = true;
+        try
+        {
+            var dto = new CreatePetDto(
+                name.Trim(),
+                species.Value,
+                string.IsNullOrWhiteSpace(breed) ? null : breed.Trim(),
+                weight,
+                DateOnly.FromDateTime(born),
+                null);
+
+            var result = await PetApi.CreatePetAsync(dto);
+            if (result is null)
+            {
+                error = "Nie udało się dodać zwierzaka. Spróbuj ponownie.";
+                return;
+            }
+            addedName = result.Name;
+            addedId = result.Id;
+            success = true;
+        }
+        catch
+        {
+            error = "Błąd połączenia. Spróbuj ponownie.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void GoToProfile() => Nav.NavigateTo($"/pets/{addedId}");
+
+    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
+    {
+        VetMed.Shared.Enums.Species.Kot    => "🐱",
+        VetMed.Shared.Enums.Species.Pies   => "🐶",
+        VetMed.Shared.Enums.Species.Krolik => "🐰",
+        VetMed.Shared.Enums.Species.Ptak   => "🐦",
+        _                                  => "🐾"
+    };
+
+    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
+    {
+        VetMed.Shared.Enums.Species.Pies   => "Pies",
+        VetMed.Shared.Enums.Species.Kot    => "Kot",
+        VetMed.Shared.Enums.Species.Krolik => "Królik",
+        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
+        _                                  => "Inne"
+    };
+}
+
+<style>
+    .add-pet-page {
+        padding: 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        padding-top: 8px;
+    }
+
+    .back-btn {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 10px;
+        color: #E8F5F2;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .page-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #E8F5F2;
+    }
+
+    .form-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(232,245,242,0.7);
+    }
+
+    .required { color: #EF5350; }
+
+    .field input {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(111,207,176,0.2);
+        color: #E8F5F2;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .field input:focus { border-color: rgba(111,207,176,0.6); }
+    .field input::placeholder { color: rgba(232,245,242,0.3); }
+
+    .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .chip {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(111,207,176,0.2);
+        color: rgba(232,245,242,0.7);
+        border-radius: 20px;
+        padding: 8px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .chip.active {
+        background: rgba(111,207,176,0.2);
+        border-color: #6FCFB0;
+        color: #6FCFB0;
+        font-weight: 700;
+    }
+
+    .error-msg {
+        background: rgba(255,80,80,0.12);
+        border: 1px solid rgba(255,80,80,0.3);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #ff8080;
+    }
+
+    .btn-primary {
+        background: #6FCFB0;
+        color: #0D1F1C;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-weight: 700;
+        font-size: 15px;
+        width: 100%;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.15s;
+        margin-top: 4px;
+    }
+
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+
+    .success-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .success-emoji { font-size: 56px; line-height: 1; }
+
+    .success-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #E8F5F2;
+    }
+
+    .success-sub {
+        font-size: 14px;
+        color: rgba(232,245,242,0.6);
+        margin-bottom: 8px;
+    }
+</style>

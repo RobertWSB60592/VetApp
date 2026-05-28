@@ -1,0 +1,80 @@
+@using VetMed.Shared.DTOs
+@using VetMed.Shared.Enums
+
+<div class="pet-card" @onclick="() => OnClick.InvokeAsync()">
+    <div class="pet-emoji">@SpeciesEmoji(Pet.Species)</div>
+    <div class="pet-info">
+        <div class="pet-name">@Pet.Name</div>
+        @if (!string.IsNullOrEmpty(Pet.Breed))
+        {
+            <div class="pet-breed">@Pet.Breed</div>
+        }
+        <div class="pet-age">@PetAge(Pet.Born)</div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PetDto Pet { get; set; } = default!;
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    private static string SpeciesEmoji(Species s) => s switch
+    {
+        Species.Kot    => "🐱",
+        Species.Pies   => "🐶",
+        Species.Krolik => "🐰",
+        Species.Ptak   => "🐦",
+        _              => "🐾"
+    };
+
+    private static string PetAge(DateOnly born)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var months = (today.Year - born.Year) * 12 + today.Month - born.Month;
+        if (today.Day < born.Day) months--;
+        if (months < 12) return $"{months} mies.";
+        var years = months / 12;
+        return years == 1 ? "1 rok" : $"{years} lat";
+    }
+}
+
+<style>
+    .pet-card {
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: border-color 0.2s, transform 0.15s;
+        min-width: 130px;
+    }
+
+    .pet-card:active { transform: scale(0.97); }
+    .pet-card:hover { border-color: rgba(111,207,176,0.5); }
+
+    .pet-emoji { font-size: 36px; line-height: 1; }
+
+    .pet-info { text-align: center; }
+
+    .pet-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #E8F5F2;
+    }
+
+    .pet-breed {
+        font-size: 11px;
+        color: rgba(232,245,242,0.6);
+        margin-top: 2px;
+    }
+
+    .pet-age {
+        font-size: 11px;
+        color: #6FCFB0;
+        margin-top: 2px;
+    }
+</style>

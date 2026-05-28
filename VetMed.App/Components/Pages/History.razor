@@ -1,0 +1,279 @@
+@page "/history"
+@inject IVisitApiService VisitApi
+@inject IPetApiService PetApi
+@inject NavigationManager Nav
+
+<div class="history-page">
+    <div class="page-header">
+        <h1 class="page-title">Historia leczenia</h1>
+    </div>
+
+    @if (loading)
+    {
+        <LoadingSpinner />
+    }
+    else
+    {
+        <div class="filter-chips">
+            <button class="chip @(selectedPetId == null ? "active" : "")" @onclick="() => selectedPetId = null">Wszystkie</button>
+            @foreach (var p in pets)
+            {
+                var pid = p.Id;
+                <button class="chip @(selectedPetId == pid ? "active" : "")" @onclick="() => selectedPetId = pid" @key="p.Id">@p.Name</button>
+            }
+        </div>
+
+        @if (FilteredVisits.Count == 0)
+        {
+            <div class="empty-state">
+                <span class="empty-icon">📋</span>
+                <p>Brak wizyt do wyświetlenia</p>
+            </div>
+        }
+        else
+        {
+            <div class="timeline">
+                @foreach (var v in FilteredVisits)
+                {
+                    <div class="timeline-item" @key="v.Id">
+                        <div class="timeline-line-wrap">
+                            <div class="tl-dot" style="background:@VisitColor(v.Type)"></div>
+                            <div class="tl-line"></div>
+                        </div>
+                        <div class="tl-card">
+                            <div class="tl-top">
+                                <span class="tl-type" style="color:@VisitColor(v.Type)">@VisitLabel(v.Type)</span>
+                                <span class="tl-date">@v.ScheduledAt.ToString("dd.MM.yyyy")</span>
+                            </div>
+                            <div class="tl-pet-name">@v.PetName</div>
+                            <div class="tl-doctor">@v.DoctorName</div>
+                            <div class="tl-footer">
+                                <span class="tl-time">@v.ScheduledAt.ToString("HH:mm")</span>
+                                <span class="status-badge @StatusClass(v.Status)">@StatusLabel(v.Status)</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<VisitDto> visits = new();
+    private List<PetDto> pets = new();
+    private int? selectedPetId;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try
+        {
+            var vTask = VisitApi.GetVisitsAsync();
+            var pTask = PetApi.GetPetsAsync();
+            await Task.WhenAll(vTask, pTask);
+            visits = vTask.Result.OrderByDescending(v => v.ScheduledAt).ToList();
+            pets = pTask.Result;
+        }
+        catch { }
+        finally { loading = false; }
+    }
+
+    private List<VisitDto> FilteredVisits => selectedPetId.HasValue
+        ? visits.Where(v => v.PetId == selectedPetId.Value).ToList()
+        : visits;
+
+    private static string VisitColor(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "#F5C842",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
+        VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
+        _                                          => "#6FCFB0"
+    };
+
+    private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "Szczepienie",
+        VetMed.Shared.Enums.VisitType.Kontrola    => "Kontrola",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "Zabieg",
+        VetMed.Shared.Enums.VisitType.Nagly       => "Nagły",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "Diagnostyka",
+        _                                          => t.ToString()
+    };
+
+    private static string StatusLabel(VetMed.Shared.Enums.VisitStatus s) => s switch
+    {
+        VetMed.Shared.Enums.VisitStatus.Zaplanowana  => "Zaplanowana",
+        VetMed.Shared.Enums.VisitStatus.Potwierdzona => "Potwierdzona",
+        VetMed.Shared.Enums.VisitStatus.Zakonczona   => "Zakończona",
+        VetMed.Shared.Enums.VisitStatus.Odwolana     => "Odwołana",
+        _                                             => s.ToString()
+    };
+
+    private static string StatusClass(VetMed.Shared.Enums.VisitStatus s) => s switch
+    {
+        VetMed.Shared.Enums.VisitStatus.Zakonczona   => "done",
+        VetMed.Shared.Enums.VisitStatus.Odwolana     => "cancelled",
+        VetMed.Shared.Enums.VisitStatus.Potwierdzona => "confirmed",
+        _                                             => "planned"
+    };
+}
+
+<style>
+    .history-page {
+        padding: 20px 16px 8px;
+    }
+
+    .page-header {
+        padding-top: 8px;
+        margin-bottom: 16px;
+    }
+
+    .page-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #E8F5F2;
+    }
+
+    .filter-chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        margin-bottom: 20px;
+        scrollbar-width: none;
+    }
+
+    .filter-chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 20px;
+        padding: 7px 14px;
+        font-size: 13px;
+        color: rgba(232,245,242,0.7);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s, border-color 0.2s, color 0.2s;
+        flex-shrink: 0;
+    }
+
+    .chip.active {
+        background: rgba(111,207,176,0.18);
+        border-color: #6FCFB0;
+        color: #6FCFB0;
+        font-weight: 700;
+    }
+
+    .timeline {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .timeline-line-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 20px;
+        flex-shrink: 0;
+        padding-top: 4px;
+    }
+
+    .tl-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        box-shadow: 0 0 8px currentColor;
+    }
+
+    .tl-line {
+        width: 2px;
+        flex: 1;
+        background: rgba(111,207,176,0.15);
+        margin-top: 6px;
+    }
+
+    .tl-card {
+        flex: 1;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(111,207,176,0.15);
+        border-radius: 14px;
+        padding: 12px 14px;
+    }
+
+    .tl-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .tl-type {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .tl-date {
+        font-size: 12px;
+        color: rgba(232,245,242,0.5);
+    }
+
+    .tl-pet-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #E8F5F2;
+        margin-bottom: 2px;
+    }
+
+    .tl-doctor {
+        font-size: 12px;
+        color: rgba(232,245,242,0.55);
+        margin-bottom: 8px;
+    }
+
+    .tl-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tl-time {
+        font-size: 12px;
+        color: rgba(232,245,242,0.5);
+    }
+
+    .status-badge {
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 3px 8px;
+    }
+
+    .status-badge.planned  { background: rgba(111,207,176,0.12); color: #6FCFB0; }
+    .status-badge.confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
+    .status-badge.done     { background: rgba(255,255,255,0.08); color: rgba(232,245,242,0.6); }
+    .status-badge.cancelled { background: rgba(239,83,80,0.12); color: #EF5350; }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 60px 20px;
+        color: rgba(232,245,242,0.45);
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .empty-icon { font-size: 40px; }
+</style>

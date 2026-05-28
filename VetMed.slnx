@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="VetMed.Api/VetMed.Api.csproj" />
+  <Project Path="VetMed.App/VetMed.App.csproj" />
+  <Project Path="VetMed.Clinic/VetMed.Clinic.csproj" />
+  <Project Path="VetMed.Infrastructure/VetMed.Infrastructure.csproj" />
+  <Project Path="VetMed.Shared/VetMed.Shared.csproj" />
+  <Project Path="VetMed.Tests/VetMed.Tests.csproj" />
+</Solution>

@@ -1,0 +1,548 @@
+@page "/book-visit"
+@inject IVisitApiService VisitApi
+@inject IPetApiService PetApi
+@inject IDoctorApiService DoctorApi
+@inject AppState AppState
+@inject NavigationManager Nav
+
+<div class="book-page">
+    <div class="page-header">
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/")'>&#8592;</button>
+        <h1 class="page-title">Umów wizytę</h1>
+    </div>
+
+    <div class="steps-indicator">
+        @for (int i = 1; i <= 5; i++)
+        {
+            var si = i;
+            <div class="step-dot @(step == si ? "active" : step > si ? "done" : "")"></div>
+        }
+    </div>
+
+    @if (loading)
+    {
+        <LoadingSpinner />
+    }
+    else
+    {
+        @if (step == 1)
+        {
+            <div class="step-section">
+                <h2 class="step-title">Rodzaj wizyty</h2>
+                <div class="type-grid">
+                    @foreach (var t in visitTypes)
+                    {
+                        var tv = t;
+                        <button class="type-card @(selectedType == tv.Type ? "active" : "")" @onclick="() => { selectedType = tv.Type; step = 2; }">
+                            <span class="type-icon">@tv.Icon</span>
+                            <span class="type-label">@tv.Label</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+        else if (step == 2)
+        {
+            <div class="step-section">
+                <h2 class="step-title">Wybierz lekarza</h2>
+                @foreach (var d in doctors)
+                {
+                    var dv = d;
+                    <button class="doctor-card @(selectedDoctorId == dv.Id ? "active" : "") @(!dv.IsAvailable ? "unavailable" : "")"
+                            @onclick="() => { if (dv.IsAvailable) { selectedDoctorId = dv.Id; step = 3; } }" @key="d.Id">
+                        <div class="doctor-avatar">@dv.FullName[0]</div>
+                        <div class="doctor-info">
+                            <div class="doctor-name">@dv.FullName</div>
+                            <div class="doctor-spec">@dv.Specialization</div>
+                        </div>
+                        <span class="avail-badge @(dv.IsAvailable ? "avail" : "unavail")">
+                            @(dv.IsAvailable ? "Dostępny" : "Niedostępny")
+                        </span>
+                    </button>
+                }
+                <button class="btn-back-step" @onclick="() => step = 1">Wróć</button>
+            </div>
+        }
+        else if (step == 3)
+        {
+            <div class="step-section">
+                <h2 class="step-title">Wybierz datę</h2>
+                <div class="field">
+                    <input type="date" @bind="selectedDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="step-nav">
+                    <button class="btn-back-step" @onclick="() => step = 2">Wróć</button>
+                    <button class="btn-next" @onclick="() => step = 4" disabled="@(selectedDate < DateTime.Today)">Dalej</button>
+                </div>
+            </div>
+        }
+        else if (step == 4)
+        {
+            <div class="step-section">
+                <h2 class="step-title">Wybierz godzinę</h2>
+                <div class="slots-grid">
+                    @foreach (var slot in timeSlots)
+                    {
+                        var sv = slot;
+                        <button class="slot @(selectedTime == sv ? "active" : "")" @onclick="() => selectedTime = sv">@sv</button>
+                    }
+                </div>
+                <div class="step-nav">
+                    <button class="btn-back-step" @onclick="() => step = 3">Wróć</button>
+                    <button class="btn-next" @onclick="() => step = 5" disabled="@string.IsNullOrEmpty(selectedTime)">Dalej</button>
+                </div>
+            </div>
+        }
+        else if (step == 5)
+        {
+            <div class="step-section">
+                <h2 class="step-title">Notatki (opcjonalnie)</h2>
+                <div class="field">
+                    <textarea @bind="notes" placeholder="Opisz objawy lub powód wizyty..." rows="4"></textarea>
+                </div>
+
+                <div class="summary-card">
+                    <div class="summary-row">
+                        <span class="s-label">Rodzaj</span>
+                        <span class="s-value">@VisitLabel(selectedType)</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="s-label">Lekarz</span>
+                        <span class="s-value">@(doctors.FirstOrDefault(d => d.Id == selectedDoctorId)?.FullName ?? "-")</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="s-label">Data</span>
+                        <span class="s-value">@selectedDate.ToString("dd.MM.yyyy")</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="s-label">Godzina</span>
+                        <span class="s-value">@selectedTime</span>
+                    </div>
+                    @if (pets.Count > 0)
+                    {
+                        <div class="summary-row">
+                            <span class="s-label">Zwierzak</span>
+                            <select class="s-select" @bind="selectedPetId">
+                                @foreach (var p in pets)
+                                {
+                                    <option value="@p.Id" @key="p.Id">@p.Name</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="error-msg">@error</div>
+                }
+
+                <div class="step-nav">
+                    <button class="btn-back-step" @onclick="() => step = 4">Wróć</button>
+                    <button class="btn-confirm" @onclick="ConfirmAsync" disabled="@(submitting || !CanSubmit)">
+                        @(submitting ? "Rezerwowanie..." : "Potwierdź wizytę")
+                    </button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "petId")] public int? PetIdQuery { get; set; }
+
+    private int step = 1;
+    private VetMed.Shared.Enums.VisitType selectedType = VetMed.Shared.Enums.VisitType.Kontrola;
+    private int? selectedDoctorId;
+    private DateTime selectedDate = DateTime.Today;
+    private string selectedTime = "";
+    private string? notes;
+    private int selectedPetId;
+    private string? error;
+    private bool loading = true;
+    private bool submitting;
+
+    private List<DoctorDto> doctors = new();
+    private List<PetDto> pets = new();
+
+    private static readonly string[] timeSlots = new[]
+    {
+        "08:00", "08:30", "09:00", "09:30", "10:00",
+        "10:30", "11:00", "14:00", "14:30", "15:00", "15:30"
+    };
+
+    private record VisitTypeOption(VetMed.Shared.Enums.VisitType Type, string Icon, string Label);
+
+    private static readonly VisitTypeOption[] visitTypes = new[]
+    {
+        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Szczepienie, "💉", "Szczepienie"),
+        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Kontrola,    "🩺", "Kontrola"),
+        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Zabieg,      "🔬", "Zabieg"),
+        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Nagly,       "🚨", "Nagły"),
+    };
+
+    private bool CanSubmit => selectedDoctorId.HasValue && selectedPetId > 0 && !string.IsNullOrEmpty(selectedTime);
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try
+        {
+            var dTask = DoctorApi.GetDoctorsAsync();
+            var pTask = PetApi.GetPetsAsync();
+            await Task.WhenAll(dTask, pTask);
+            doctors = dTask.Result;
+            pets = pTask.Result;
+
+            if (PetIdQuery.HasValue && pets.Any(p => p.Id == PetIdQuery.Value))
+                selectedPetId = PetIdQuery.Value;
+            else if (pets.Count > 0)
+                selectedPetId = pets[0].Id;
+        }
+        catch { }
+        finally { loading = false; }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        error = null;
+        if (!CanSubmit)
+        {
+            error = "Wypełnij wszystkie wymagane pola.";
+            return;
+        }
+
+        submitting = true;
+        try
+        {
+            var timeParts = selectedTime.Split(':');
+            var scheduledAt = selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
+
+            var dto = new CreateVisitDto(scheduledAt, selectedType, selectedPetId, selectedDoctorId!.Value, notes);
+            var result = await VisitApi.CreateVisitAsync(dto);
+            if (result is null)
+            {
+                error = "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
+                return;
+            }
+            Nav.NavigateTo("/history", replace: true);
+        }
+        catch
+        {
+            error = "Błąd połączenia. Spróbuj ponownie.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
+    {
+        VetMed.Shared.Enums.VisitType.Szczepienie => "Szczepienie",
+        VetMed.Shared.Enums.VisitType.Kontrola    => "Kontrola",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "Zabieg",
+        VetMed.Shared.Enums.VisitType.Nagly       => "Nagły",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "Diagnostyka",
+        _                                          => t.ToString()
+    };
+}
+
+<style>
+    .book-page {
+        padding: 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-top: 8px;
+    }
+
+    .back-btn {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 10px;
+        color: #E8F5F2;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .page-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #E8F5F2;
+    }
+
+    .steps-indicator {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        margin-bottom: 24px;
+    }
+
+    .step-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.15);
+        transition: background 0.3s, transform 0.2s;
+    }
+
+    .step-dot.active {
+        background: #6FCFB0;
+        transform: scale(1.3);
+    }
+
+    .step-dot.done {
+        background: rgba(111,207,176,0.45);
+    }
+
+    .step-section {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .step-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #E8F5F2;
+        margin-bottom: 4px;
+    }
+
+    .type-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .type-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 16px;
+        padding: 20px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+    .type-card.active {
+        border-color: #6FCFB0;
+        background: rgba(111,207,176,0.12);
+    }
+
+    .type-card:active { transform: scale(0.97); }
+
+    .type-icon { font-size: 28px; }
+
+    .type-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #E8F5F2;
+    }
+
+    .doctor-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 14px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+    .doctor-card.active {
+        border-color: #6FCFB0;
+        background: rgba(111,207,176,0.1);
+    }
+
+    .doctor-card.unavailable { opacity: 0.5; cursor: not-allowed; }
+
+    .doctor-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(111,207,176,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+        color: #6FCFB0;
+        flex-shrink: 0;
+    }
+
+    .doctor-info { flex: 1; }
+
+    .doctor-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #E8F5F2;
+    }
+
+    .doctor-spec {
+        font-size: 12px;
+        color: rgba(232,245,242,0.55);
+        margin-top: 2px;
+    }
+
+    .avail-badge {
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 3px 8px;
+        white-space: nowrap;
+    }
+
+    .avail-badge.avail { background: rgba(111,207,176,0.15); color: #6FCFB0; }
+    .avail-badge.unavail { background: rgba(255,80,80,0.1); color: #ff8080; }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .field input, .field textarea {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(111,207,176,0.2);
+        color: #E8F5F2;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    .field input:focus, .field textarea:focus { border-color: rgba(111,207,176,0.6); }
+    .field textarea::placeholder { color: rgba(232,245,242,0.3); }
+
+    .slots-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .slot {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(111,207,176,0.2);
+        border-radius: 10px;
+        padding: 8px 14px;
+        color: rgba(232,245,242,0.8);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+    }
+
+    .slot.active {
+        background: rgba(111,207,176,0.2);
+        border-color: #6FCFB0;
+        color: #6FCFB0;
+    }
+
+    .summary-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(111,207,176,0.15);
+        border-radius: 16px;
+        padding: 4px 0;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+
+    .s-label {
+        font-size: 13px;
+        color: rgba(232,245,242,0.55);
+    }
+
+    .s-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #E8F5F2;
+    }
+
+    .s-select {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(111,207,176,0.2);
+        color: #E8F5F2;
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .s-select option { background: #0D1F1C; }
+
+    .step-nav {
+        display: flex;
+        gap: 10px;
+        margin-top: 4px;
+    }
+
+    .btn-back-step {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(111,207,176,0.2);
+        color: rgba(232,245,242,0.7);
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .btn-next, .btn-confirm {
+        background: #6FCFB0;
+        color: #0D1F1C;
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        flex: 1;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-next:disabled, .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-next:active:not(:disabled), .btn-confirm:active:not(:disabled) { transform: scale(0.98); }
+
+    .error-msg {
+        background: rgba(255,80,80,0.12);
+        border: 1px solid rgba(255,80,80,0.3);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: #ff8080;
+    }
+</style>
