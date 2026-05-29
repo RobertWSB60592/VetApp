@@ -2,6 +2,7 @@
 @inject IVisitApiService VisitApi
 @inject IPetApiService PetApi
 @inject IDoctorApiService DoctorApi
+@inject ApiClient Api
 @inject AppState AppState
 @inject NavigationManager Nav
 
@@ -223,13 +224,14 @@
         try
         {
             var timeParts = selectedTime.Split(':');
-            var scheduledAt = selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
+            var localDt = selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
+            var scheduledAt = DateTime.SpecifyKind(localDt, DateTimeKind.Local).ToUniversalTime();
 
             var dto = new CreateVisitDto(scheduledAt, selectedType, selectedPetId, selectedDoctorId!.Value, notes);
             var result = await VisitApi.CreateVisitAsync(dto);
             if (result is null)
             {
-                error = "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
+                error = Api.LastError ?? "Nie udało się zarezerwować wizyty. Spróbuj ponownie.";
                 return;
             }
             Nav.NavigateTo("/history", replace: true);
