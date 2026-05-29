@@ -192,7 +192,7 @@
         VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
         VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
         VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#E8906A"
+        _                                          => "#3CB87A"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -223,7 +223,7 @@
     }
 
     .hero {
-        background: linear-gradient(180deg, rgba(232,144,106,0.12) 0%, transparent 100%);
+        background: linear-gradient(180deg, rgba(60,184,122,0.12) 0%, transparent 100%);
         padding: 20px 20px 28px;
         display: flex;
         flex-direction: column;
@@ -235,10 +235,10 @@
         position: absolute;
         left: 16px;
         top: 20px;
-        background: rgba(245,237,229,0.08);
-        border: 1px solid rgba(232,144,106,0.2);
+        background: rgba(26,44,34,0.08);
+        border: 1px solid rgba(60,184,122,0.2);
         border-radius: 12px;
-        color: #F5EDE5;
+        color: #1A2C22;
         width: 38px;
         height: 38px;
         cursor: pointer;
@@ -248,14 +248,14 @@
         transition: background 0.2s;
     }
 
-    .back-btn:hover { background: rgba(232,144,106,0.1); }
+    .back-btn:hover { background: rgba(60,184,122,0.1); }
 
     .hero-emoji { font-size: 72px; line-height: 1; margin-bottom: 14px; }
 
     .hero-name {
         font-size: 28px;
         font-weight: 800;
-        color: #F5EDE5;
+        color: #1A2C22;
         margin-bottom: 12px;
     }
 
@@ -267,33 +267,33 @@
     }
 
     .hero-tag {
-        background: rgba(245,237,229,0.09);
+        background: rgba(26,44,34,0.09);
         border-radius: 10px;
         padding: 5px 13px;
         font-size: 12px;
-        color: rgba(245,237,229,0.75);
+        color: rgba(26,44,34,0.75);
         font-weight: 600;
     }
 
     .hero-tag-mint {
-        background: rgba(232,144,106,0.15);
-        color: #E8906A;
+        background: rgba(60,184,122,0.15);
+        color: #3CB87A;
     }
 
     .tabs-bar {
         display: flex;
-        background: rgba(245,237,229,0.04);
+        background: rgba(26,44,34,0.04);
         margin: 0 16px;
         border-radius: 14px;
         padding: 4px;
-        border: 1px solid rgba(232,144,106,0.15);
+        border: 1px solid rgba(60,184,122,0.15);
     }
 
     .tab {
         flex: 1;
         background: transparent;
         border: none;
-        color: rgba(245,237,229,0.45);
+        color: rgba(26,44,34,0.45);
         font-size: 13px;
         font-weight: 600;
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -304,8 +304,8 @@
     }
 
     .tab-active {
-        background: rgba(232,144,106,0.2);
-        color: #E8906A;
+        background: rgba(60,184,122,0.2);
+        color: #3CB87A;
     }
 
     .tab-content {
@@ -314,11 +314,11 @@
     }
 
     .info-card {
-        background: #352010;
-        border: 1px solid rgba(232,144,106,0.2);
+        background: #FFFFFF;
+        border: 1px solid rgba(60,184,122,0.2);
         border-radius: 20px;
         padding: 4px 0;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        box-shadow: 0 8px 24px rgba(26,44,34,0.08);
     }
 
     .info-row {
@@ -326,34 +326,34 @@
         justify-content: space-between;
         align-items: center;
         padding: 13px 18px;
-        border-bottom: 1px solid rgba(245,237,229,0.05);
+        border-bottom: 1px solid rgba(26,44,34,0.05);
     }
 
     .info-row:last-child { border-bottom: none; }
 
     .info-label {
         font-size: 14px;
-        color: rgba(245,237,229,0.45);
+        color: rgba(26,44,34,0.45);
     }
 
     .info-value {
         font-size: 14px;
         font-weight: 600;
-        color: #F5EDE5;
+        color: #1A2C22;
     }
 
-    .info-value-mint { color: #E8906A; }
+    .info-value-mint { color: #3CB87A; }
 
     .visit-row {
         display: flex;
         align-items: center;
         gap: 12px;
-        background: #352010;
-        border: 1px solid rgba(232,144,106,0.15);
+        background: #FFFFFF;
+        border: 1px solid rgba(60,184,122,0.15);
         border-radius: 14px;
         padding: 12px 14px;
         margin-bottom: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
     }
 
     .visit-dot {
@@ -369,20 +369,20 @@
     .visit-type {
         font-size: 14px;
         font-weight: 600;
-        color: #F5EDE5;
+        color: #1A2C22;
     }
 
     .visit-meta {
         font-size: 12px;
-        color: rgba(245,237,229,0.45);
+        color: rgba(26,44,34,0.45);
         margin-top: 2px;
     }
 
     .status-badge {
         font-size: 11px;
         font-weight: 600;
-        color: #E8906A;
-        background: rgba(232,144,106,0.12);
+        color: #3CB87A;
+        background: rgba(60,184,122,0.12);
         border-radius: 8px;
         padding: 3px 8px;
         white-space: nowrap;
@@ -390,7 +390,7 @@
 
     .empty-msg {
         text-align: center;
-        color: rgba(245,237,229,0.35);
+        color: rgba(26,44,34,0.35);
         font-size: 14px;
         padding: 40px 0;
     }
@@ -400,8 +400,8 @@
     }
 
     .btn-primary {
-        background: #E8906A;
-        color: #1C100A;
+        background: #3CB87A;
+        color: #F8FCF9;
         border: none;
         border-radius: 16px;
         padding: 15px;
@@ -421,15 +421,15 @@
         align-items: center;
         gap: 16px;
         padding: 80px 20px;
-        color: rgba(245,237,229,0.45);
+        color: rgba(26,44,34,0.45);
     }
 
     .not-found-text { font-size: 16px; }
 
     .btn-back-sm {
-        background: rgba(232,144,106,0.15);
-        border: 1px solid rgba(232,144,106,0.3);
-        color: #E8906A;
+        background: rgba(60,184,122,0.15);
+        border: 1px solid rgba(60,184,122,0.3);
+        color: #3CB87A;
         border-radius: 12px;
         padding: 10px 24px;
         font-size: 14px;

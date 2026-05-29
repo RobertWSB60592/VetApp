@@ -1,16 +1,16 @@
 :root {
-    --bg:       #1C100A;
-    --surface:  #2A1A0E;
-    --card:     #352010;
-    --mint:     #E8906A;
-    --mintDim:  #C4714A;
-    --mintGlow: rgba(232,144,106,0.15);
-    --text:     #F5EDE5;
-    --muted:    rgba(245,237,229,0.45);
-    --faint:    rgba(245,237,229,0.09);
-    --border:   rgba(232,144,106,0.2);
-    --inputBg:  rgba(245,237,229,0.07);
-    --danger:   #FF7070;
+    --bg:       #F8FCF9;
+    --surface:  #EDF7F1;
+    --card:     #FFFFFF;
+    --mint:     #3CB87A;
+    --mintDim:  #2A9A63;
+    --mintGlow: rgba(60,184,122,0.12);
+    --text:     #1A2C22;
+    --muted:    rgba(26,44,34,0.5);
+    --faint:    rgba(26,44,34,0.05);
+    --border:   rgba(60,184,122,0.2);
+    --inputBg:  rgba(26,44,34,0.04);
+    --danger:   #E53935;
 }
 
 *, *::before, *::after {
@@ -49,10 +49,10 @@ body {
 a { color: var(--mint); text-decoration: none; }
 
 #blazor-error-ui {
-    background: #2A1A0E;
+    background: #EDF7F1;
     border-top: 1px solid var(--border);
     bottom: 0;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.4);
+    box-shadow: 0 -2px 8px rgba(26,44,34,0.1);
     display: none;
     left: 0;
     padding: 0.6rem 1.25rem 0.7rem;
