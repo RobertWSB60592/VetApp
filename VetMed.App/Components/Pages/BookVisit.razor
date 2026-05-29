@@ -7,15 +7,22 @@
 
 <div class="book-page">
     <div class="page-header">
-        <button class="back-btn" @onclick='() => Nav.NavigateTo("/")'>&#8592;</button>
-        <h1 class="page-title">Umów wizytę</h1>
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/")'>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <div>
+            <div class="page-title">Umów wizytę</div>
+            <div class="page-sub">Krok @step z 5</div>
+        </div>
     </div>
 
     <div class="steps-indicator">
         @for (int i = 1; i <= 5; i++)
         {
             var si = i;
-            <div class="step-dot @(step == si ? "active" : step > si ? "done" : "")"></div>
+            <div class="step-dot @(step == si ? "step-active" : step > si ? "step-done" : "")"></div>
         }
     </div>
 
@@ -33,7 +40,7 @@
                     @foreach (var t in visitTypes)
                     {
                         var tv = t;
-                        <button class="type-card @(selectedType == tv.Type ? "active" : "")" @onclick="() => { selectedType = tv.Type; step = 2; }">
+                        <button class="type-card @(selectedType == tv.Type ? "type-card-active" : "")" @onclick="() => { selectedType = tv.Type; step = 2; }">
                             <span class="type-icon">@tv.Icon</span>
                             <span class="type-label">@tv.Label</span>
                         </button>
@@ -48,7 +55,7 @@
                 @foreach (var d in doctors)
                 {
                     var dv = d;
-                    <button class="doctor-card @(selectedDoctorId == dv.Id ? "active" : "") @(!dv.IsAvailable ? "unavailable" : "")"
+                    <button class="doctor-card @(selectedDoctorId == dv.Id ? "doctor-active" : "") @(!dv.IsAvailable ? "doctor-unavailable" : "")"
                             @onclick="() => { if (dv.IsAvailable) { selectedDoctorId = dv.Id; step = 3; } }" @key="d.Id">
                         <div class="doctor-avatar">@dv.FullName[0]</div>
                         <div class="doctor-info">
@@ -68,7 +75,7 @@
             <div class="step-section">
                 <h2 class="step-title">Wybierz datę</h2>
                 <div class="field">
-                    <input type="date" @bind="selectedDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <input type="date" class="glass-input" @bind="selectedDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
                 </div>
                 <div class="step-nav">
                     <button class="btn-back-step" @onclick="() => step = 2">Wróć</button>
@@ -84,7 +91,7 @@
                     @foreach (var slot in timeSlots)
                     {
                         var sv = slot;
-                        <button class="slot @(selectedTime == sv ? "active" : "")" @onclick="() => selectedTime = sv">@sv</button>
+                        <button class="slot @(selectedTime == sv ? "slot-active" : "")" @onclick="() => selectedTime = sv">@sv</button>
                     }
                 </div>
                 <div class="step-nav">
@@ -98,7 +105,7 @@
             <div class="step-section">
                 <h2 class="step-title">Notatki (opcjonalnie)</h2>
                 <div class="field">
-                    <textarea @bind="notes" placeholder="Opisz objawy lub powód wizyty..." rows="4"></textarea>
+                    <textarea class="glass-input glass-textarea" @bind="notes" placeholder="Opisz objawy lub powód wizyty..." rows="4"></textarea>
                 </div>
 
                 <div class="summary-card">
@@ -250,7 +257,7 @@
 
 <style>
     .book-page {
-        padding: 20px 16px;
+        padding: 20px 16px 32px;
         display: flex;
         flex-direction: column;
         gap: 0;
@@ -259,54 +266,64 @@
     .page-header {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
+        gap: 14px;
+        margin-bottom: 20px;
         padding-top: 8px;
     }
 
     .back-btn {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 10px;
-        color: #E8F5F2;
-        font-size: 18px;
-        width: 36px;
-        height: 36px;
-        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 12px;
+        color: #F5EDE5;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
         flex-shrink: 0;
+        transition: background 0.2s;
     }
 
+    .back-btn:hover { background: rgba(232,144,106,0.1); }
+
     .page-title {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 800;
-        color: #E8F5F2;
+        color: #F5EDE5;
+    }
+
+    .page-sub {
+        font-size: 12px;
+        color: rgba(245,237,229,0.45);
+        margin-top: 2px;
     }
 
     .steps-indicator {
         display: flex;
         gap: 6px;
         justify-content: center;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
     }
 
     .step-dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: rgba(255,255,255,0.15);
-        transition: background 0.3s, transform 0.2s;
+        background: rgba(245,237,229,0.12);
+        transition: background 0.3s, transform 0.2s, width 0.3s;
     }
 
-    .step-dot.active {
-        background: #6FCFB0;
+    .step-active {
+        background: #E8906A;
         transform: scale(1.3);
+        width: 20px;
+        border-radius: 4px;
     }
 
-    .step-dot.done {
-        background: rgba(111,207,176,0.45);
+    .step-done {
+        background: rgba(232,144,106,0.45);
     }
 
     .step-section {
@@ -316,9 +333,9 @@
     }
 
     .step-title {
-        font-size: 17px;
+        font-size: 18px;
         font-weight: 700;
-        color: #E8F5F2;
+        color: #F5EDE5;
         margin-bottom: 4px;
     }
 
@@ -329,37 +346,38 @@
     }
 
     .type-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 16px;
-        padding: 20px 12px;
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 20px;
+        padding: 22px 12px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         cursor: pointer;
         transition: border-color 0.2s, background 0.2s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .type-card.active {
-        border-color: #6FCFB0;
-        background: rgba(111,207,176,0.12);
+    .type-card-active {
+        border-color: #E8906A;
+        background: rgba(232,144,106,0.15);
     }
 
     .type-card:active { transform: scale(0.97); }
 
-    .type-icon { font-size: 28px; }
+    .type-icon { font-size: 30px; }
 
     .type-label {
         font-size: 13px;
-        font-weight: 600;
-        color: #E8F5F2;
+        font-weight: 700;
+        color: #F5EDE5;
     }
 
     .doctor-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 14px;
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 16px;
         padding: 14px 16px;
         display: flex;
         align-items: center;
@@ -368,26 +386,27 @@
         width: 100%;
         text-align: left;
         transition: border-color 0.2s, background 0.2s;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
-    .doctor-card.active {
-        border-color: #6FCFB0;
-        background: rgba(111,207,176,0.1);
+    .doctor-active {
+        border-color: #E8906A;
+        background: rgba(232,144,106,0.12);
     }
 
-    .doctor-card.unavailable { opacity: 0.5; cursor: not-allowed; }
+    .doctor-unavailable { opacity: 0.45; cursor: not-allowed; }
 
     .doctor-avatar {
-        width: 40px;
-        height: 40px;
+        width: 42px;
+        height: 42px;
         border-radius: 50%;
-        background: rgba(111,207,176,0.2);
+        background: rgba(232,144,106,0.2);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 16px;
         font-weight: 700;
-        color: #6FCFB0;
+        color: #E8906A;
         flex-shrink: 0;
     }
 
@@ -396,12 +415,12 @@
     .doctor-name {
         font-size: 14px;
         font-weight: 700;
-        color: #E8F5F2;
+        color: #F5EDE5;
     }
 
     .doctor-spec {
         font-size: 12px;
-        color: rgba(232,245,242,0.55);
+        color: rgba(245,237,229,0.45);
         margin-top: 2px;
     }
 
@@ -409,12 +428,12 @@
         font-size: 11px;
         font-weight: 600;
         border-radius: 8px;
-        padding: 3px 8px;
+        padding: 4px 9px;
         white-space: nowrap;
     }
 
-    .avail-badge.avail { background: rgba(111,207,176,0.15); color: #6FCFB0; }
-    .avail-badge.unavail { background: rgba(255,80,80,0.1); color: #ff8080; }
+    .avail  { background: rgba(232,144,106,0.15); color: #E8906A; }
+    .unavail { background: rgba(255,112,112,0.1); color: #FF7070; }
 
     .field {
         display: flex;
@@ -422,22 +441,26 @@
         gap: 8px;
     }
 
-    .field input, .field textarea {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: #E8F5F2;
-        border-radius: 12px;
-        padding: 12px 16px;
+    .glass-input {
+        width: 100%;
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        color: #F5EDE5;
+        border-radius: 14px;
+        padding: 14px 16px;
         font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         outline: none;
         transition: border-color 0.2s;
-        width: 100%;
-        resize: vertical;
-        font-family: inherit;
     }
 
-    .field input:focus, .field textarea:focus { border-color: rgba(111,207,176,0.6); }
-    .field textarea::placeholder { color: rgba(232,245,242,0.3); }
+    .glass-input:focus { border-color: rgba(232,144,106,0.6); }
+    .glass-input::placeholder { color: rgba(245,237,229,0.25); }
+
+    .glass-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
 
     .slots-grid {
         display: flex;
@@ -446,62 +469,65 @@
     }
 
     .slot {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 10px;
-        padding: 8px 14px;
-        color: rgba(232,245,242,0.8);
+        background: rgba(245,237,229,0.06);
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 12px;
+        padding: 9px 16px;
+        color: rgba(245,237,229,0.7);
         font-size: 13px;
         font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
-        transition: background 0.2s, border-color 0.2s;
+        transition: background 0.2s, border-color 0.2s, color 0.2s;
     }
 
-    .slot.active {
-        background: rgba(111,207,176,0.2);
-        border-color: #6FCFB0;
-        color: #6FCFB0;
+    .slot-active {
+        background: rgba(232,144,106,0.2);
+        border-color: #E8906A;
+        color: #E8906A;
     }
 
     .summary-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(111,207,176,0.15);
-        border-radius: 16px;
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 20px;
         padding: 4px 0;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
 
     .summary-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 13px 18px;
+        border-bottom: 1px solid rgba(245,237,229,0.05);
     }
 
     .summary-row:last-child { border-bottom: none; }
 
     .s-label {
         font-size: 13px;
-        color: rgba(232,245,242,0.55);
+        color: rgba(245,237,229,0.45);
     }
 
     .s-value {
         font-size: 14px;
         font-weight: 600;
-        color: #E8F5F2;
+        color: #F5EDE5;
     }
 
     .s-select {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: #E8F5F2;
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        color: #F5EDE5;
         border-radius: 8px;
-        padding: 4px 8px;
+        padding: 5px 10px;
         font-size: 13px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         outline: none;
     }
 
-    .s-select option { background: #0D1F1C; }
+    .s-select option { background: #2A1A0E; }
 
     .step-nav {
         display: flex;
@@ -510,39 +536,44 @@
     }
 
     .btn-back-step {
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: rgba(232,245,242,0.7);
-        border-radius: 12px;
-        padding: 12px 20px;
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        color: rgba(245,237,229,0.6);
+        border-radius: 14px;
+        padding: 13px 20px;
         font-size: 14px;
         font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
         flex-shrink: 0;
+        transition: background 0.2s;
     }
 
+    .btn-back-step:hover { background: rgba(245,237,229,0.12); }
+
     .btn-next, .btn-confirm {
-        background: #6FCFB0;
-        color: #0D1F1C;
+        background: #E8906A;
+        color: #1C100A;
         border: none;
-        border-radius: 12px;
-        padding: 12px;
-        font-weight: 700;
+        border-radius: 14px;
+        padding: 13px;
+        font-weight: 800;
         font-size: 14px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         flex: 1;
         cursor: pointer;
         transition: opacity 0.2s, transform 0.15s;
     }
 
-    .btn-next:disabled, .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-next:disabled, .btn-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-next:active:not(:disabled), .btn-confirm:active:not(:disabled) { transform: scale(0.98); }
 
     .error-msg {
-        background: rgba(255,80,80,0.12);
-        border: 1px solid rgba(255,80,80,0.3);
-        border-radius: 10px;
-        padding: 10px 14px;
+        background: rgba(255,112,112,0.1);
+        border: 1px solid rgba(255,112,112,0.3);
+        border-radius: 12px;
+        padding: 12px 14px;
         font-size: 13px;
-        color: #ff8080;
+        color: #FF7070;
     }
 </style>

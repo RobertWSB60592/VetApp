@@ -15,19 +15,19 @@
     else
     {
         <div class="filter-chips">
-            <button class="chip @(selectedPetId == null ? "active" : "")" @onclick="() => selectedPetId = null">Wszystkie</button>
+            <button class="chip @(selectedPetId == null ? "chip-active" : "")" @onclick="() => selectedPetId = null">Wszystkie</button>
             @foreach (var p in pets)
             {
                 var pid = p.Id;
-                <button class="chip @(selectedPetId == pid ? "active" : "")" @onclick="() => selectedPetId = pid" @key="p.Id">@p.Name</button>
+                <button class="chip @(selectedPetId == pid ? "chip-active" : "")" @onclick="() => selectedPetId = pid" @key="p.Id">@p.Name</button>
             }
         </div>
 
         @if (FilteredVisits.Count == 0)
         {
             <div class="empty-state">
-                <span class="empty-icon">📋</span>
-                <p>Brak wizyt do wyświetlenia</p>
+                <span class="empty-icon">&#x1F4CB;</span>
+                <p class="empty-text">Brak wizyt do wyświetlenia</p>
             </div>
         }
         else
@@ -36,8 +36,8 @@
                 @foreach (var v in FilteredVisits)
                 {
                     <div class="timeline-item" @key="v.Id">
-                        <div class="timeline-line-wrap">
-                            <div class="tl-dot" style="background:@VisitColor(v.Type)"></div>
+                        <div class="tl-left">
+                            <div class="tl-dot" style="background:@VisitColor(v.Type); box-shadow: 0 0 8px @VisitColor(v.Type);"></div>
                             <div class="tl-line"></div>
                         </div>
                         <div class="tl-card">
@@ -90,7 +90,7 @@
         VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
         VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
         VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#6FCFB0"
+        _                                          => "#E8906A"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -114,10 +114,10 @@
 
     private static string StatusClass(VetMed.Shared.Enums.VisitStatus s) => s switch
     {
-        VetMed.Shared.Enums.VisitStatus.Zakonczona   => "done",
-        VetMed.Shared.Enums.VisitStatus.Odwolana     => "cancelled",
-        VetMed.Shared.Enums.VisitStatus.Potwierdzona => "confirmed",
-        _                                             => "planned"
+        VetMed.Shared.Enums.VisitStatus.Zakonczona   => "badge-done",
+        VetMed.Shared.Enums.VisitStatus.Odwolana     => "badge-cancelled",
+        VetMed.Shared.Enums.VisitStatus.Potwierdzona => "badge-confirmed",
+        _                                             => "badge-planned"
     };
 }
 
@@ -128,13 +128,13 @@
 
     .page-header {
         padding-top: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
     }
 
     .page-title {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 800;
-        color: #E8F5F2;
+        color: #F5EDE5;
     }
 
     .filter-chips {
@@ -149,23 +149,24 @@
     .filter-chips::-webkit-scrollbar { display: none; }
 
     .chip {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(111,207,176,0.2);
+        background: rgba(245,237,229,0.06);
+        border: 1px solid rgba(232,144,106,0.2);
         border-radius: 20px;
-        padding: 7px 14px;
+        padding: 8px 16px;
         font-size: 13px;
-        color: rgba(232,245,242,0.7);
+        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: rgba(245,237,229,0.55);
         cursor: pointer;
         white-space: nowrap;
         transition: background 0.2s, border-color 0.2s, color 0.2s;
         flex-shrink: 0;
     }
 
-    .chip.active {
-        background: rgba(111,207,176,0.18);
-        border-color: #6FCFB0;
-        color: #6FCFB0;
-        font-weight: 700;
+    .chip-active {
+        background: rgba(232,144,106,0.18);
+        border-color: #E8906A;
+        color: #E8906A;
     }
 
     .timeline {
@@ -179,7 +180,7 @@
         margin-bottom: 12px;
     }
 
-    .timeline-line-wrap {
+    .tl-left {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -193,52 +194,54 @@
         height: 12px;
         border-radius: 50%;
         flex-shrink: 0;
-        box-shadow: 0 0 8px currentColor;
     }
 
     .tl-line {
         width: 2px;
         flex: 1;
-        background: rgba(111,207,176,0.15);
+        background: rgba(232,144,106,0.15);
         margin-top: 6px;
     }
 
     .tl-card {
         flex: 1;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(111,207,176,0.15);
-        border-radius: 14px;
-        padding: 12px 14px;
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 16px;
+        padding: 14px 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
     .tl-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
 
     .tl-type {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
 
     .tl-date {
         font-size: 12px;
-        color: rgba(232,245,242,0.5);
+        color: rgba(245,237,229,0.4);
     }
 
     .tl-pet-name {
         font-size: 15px;
         font-weight: 700;
-        color: #E8F5F2;
+        color: #F5EDE5;
         margin-bottom: 2px;
     }
 
     .tl-doctor {
         font-size: 12px;
-        color: rgba(232,245,242,0.55);
-        margin-bottom: 8px;
+        color: rgba(245,237,229,0.45);
+        margin-bottom: 10px;
     }
 
     .tl-footer {
@@ -249,31 +252,31 @@
 
     .tl-time {
         font-size: 12px;
-        color: rgba(232,245,242,0.5);
+        color: rgba(245,237,229,0.4);
     }
 
     .status-badge {
         font-size: 11px;
         font-weight: 600;
         border-radius: 8px;
-        padding: 3px 8px;
+        padding: 3px 9px;
     }
 
-    .status-badge.planned  { background: rgba(111,207,176,0.12); color: #6FCFB0; }
-    .status-badge.confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
-    .status-badge.done     { background: rgba(255,255,255,0.08); color: rgba(232,245,242,0.6); }
-    .status-badge.cancelled { background: rgba(239,83,80,0.12); color: #EF5350; }
+    .badge-planned   { background: rgba(232,144,106,0.12); color: #E8906A; }
+    .badge-confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
+    .badge-done      { background: rgba(245,237,229,0.08); color: rgba(245,237,229,0.5); }
+    .badge-cancelled { background: rgba(239,83,80,0.12);  color: #EF5350; }
 
     .empty-state {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 12px;
-        padding: 60px 20px;
-        color: rgba(232,245,242,0.45);
-        font-size: 14px;
+        padding: 64px 20px;
+        color: rgba(245,237,229,0.35);
         text-align: center;
     }
 
-    .empty-icon { font-size: 40px; }
+    .empty-icon { font-size: 44px; }
+    .empty-text { font-size: 15px; }
 </style>

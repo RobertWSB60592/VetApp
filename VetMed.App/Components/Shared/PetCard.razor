@@ -2,14 +2,20 @@
 @using VetMed.Shared.Enums
 
 <div class="pet-card" @onclick="() => OnClick.InvokeAsync()">
-    <div class="pet-emoji">@SpeciesEmoji(Pet.Species)</div>
-    <div class="pet-info">
+    <div class="pet-card-top">
+        <div class="pet-emoji-wrap">@SpeciesEmoji(Pet.Species)</div>
+        <div class="pet-age-badge">@PetAge(Pet.Born)</div>
+    </div>
+    <div class="pet-card-info">
         <div class="pet-name">@Pet.Name</div>
         @if (!string.IsNullOrEmpty(Pet.Breed))
         {
             <div class="pet-breed">@Pet.Breed</div>
         }
-        <div class="pet-age">@PetAge(Pet.Born)</div>
+        @if (Pet.WeightKg.HasValue)
+        {
+            <div class="pet-weight">@Pet.WeightKg kg</div>
+        }
     </div>
 </div>
 
@@ -39,42 +45,68 @@
 
 <style>
     .pet-card {
-        background: rgba(255,255,255,0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 16px;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 20px;
+        overflow: hidden;
         cursor: pointer;
         transition: border-color 0.2s, transform 0.15s;
         min-width: 130px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
     }
 
-    .pet-card:active { transform: scale(0.97); }
-    .pet-card:hover { border-color: rgba(111,207,176,0.5); }
+    .pet-card:active { transform: scale(0.96); }
+    .pet-card:hover { border-color: rgba(232,144,106,0.45); }
 
-    .pet-emoji { font-size: 36px; line-height: 1; }
+    .pet-card-top {
+        position: relative;
+        background: rgba(232,144,106,0.08);
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-    .pet-info { text-align: center; }
+    .pet-emoji-wrap {
+        font-size: 44px;
+        line-height: 1;
+    }
+
+    .pet-age-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(0,0,0,0.4);
+        backdrop-filter: blur(8px);
+        border-radius: 8px;
+        padding: 3px 7px;
+        border: 1px solid rgba(255,255,255,0.15);
+        font-size: 10px;
+        font-weight: 600;
+        color: rgba(245,237,229,0.85);
+    }
+
+    .pet-card-info {
+        padding: 10px 12px 12px;
+    }
 
     .pet-name {
         font-size: 14px;
         font-weight: 700;
-        color: #E8F5F2;
+        color: #F5EDE5;
     }
 
     .pet-breed {
         font-size: 11px;
-        color: rgba(232,245,242,0.6);
+        color: rgba(245,237,229,0.5);
         margin-top: 2px;
     }
 
-    .pet-age {
+    .pet-weight {
         font-size: 11px;
-        color: #6FCFB0;
+        color: rgba(245,237,229,0.45);
         margin-top: 2px;
     }
 </style>

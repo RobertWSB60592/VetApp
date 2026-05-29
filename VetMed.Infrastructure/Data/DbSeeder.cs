@@ -23,7 +23,7 @@ public static class DbSeeder
         {
             FullName     = "Robert Demo",
             Email        = "demo@vetmed.pl",
-            PasswordHash = hashPassword("demo123"),
+            PasswordHash = "NOPASSWORD",
             CreatedAt    = DateTime.UtcNow
         };
 
