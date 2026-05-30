@@ -36,6 +36,61 @@ public sealed class VisitService : IVisitService
         return visits.Select(Map).ToList();
     }
 
+    public async Task<IReadOnlyList<DayAvailabilityDto>> GetAvailabilityAsync(int doctorId, DateOnly from, int days, CancellationToken ct = default)
+    {
+        days = Math.Clamp(days, 1, 31);
+        var rangeStartUtc = DateTime.SpecifyKind(from.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        var visits = await _visits.GetActiveByDoctorOnDateAsync(doctorId, rangeStartUtc, rangeStartUtc.AddDays(days), ct);
+        var now = DateTime.UtcNow;
+
+        var scheduleCache = new Dictionary<DayOfWeek, IReadOnlyList<DoctorSchedule>>();
+        var result = new List<DayAvailabilityDto>(days);
+
+        for (var i = 0; i < days; i++)
+        {
+            var date = from.AddDays(i);
+            if (!scheduleCache.TryGetValue(date.DayOfWeek, out var schedules))
+            {
+                schedules = await _doctors.GetSchedulesAsync(doctorId, date.DayOfWeek, ct);
+                scheduleCache[date.DayOfWeek] = schedules;
+            }
+
+            var takenTimes = visits
+                .Where(v => DateOnly.FromDateTime(v.ScheduledAt) == date)
+                .Select(v => TimeOnly.FromDateTime(v.ScheduledAt))
+                .ToHashSet();
+
+            var hasFree = false;
+            foreach (var schedule in schedules)
+            {
+                for (var t = schedule.StartTime; t < schedule.EndTime; t = t.Add(SlotLength))
+                {
+                    var slotUtc = DateTime.SpecifyKind(date.ToDateTime(t), DateTimeKind.Utc);
+                    if (!takenTimes.Contains(t) && slotUtc > now)
+                    {
+                        hasFree = true;
+                        break;
+                    }
+                }
+                if (hasFree)
+                    break;
+            }
+
+            result.Add(new DayAvailabilityDto(date, hasFree));
+        }
+
+        return result;
+    }
+
+    public async Task<VisitDto?> GetByIdAsync(int visitId, int ownerId, CancellationToken ct = default)
+    {
+        var visit = await _visits.GetByIdAsync(visitId, ct);
+        if (visit is null || visit.Pet.OwnerId != ownerId)
+            return null;
+
+        return Map(visit);
+    }
+
     public async Task<IReadOnlyList<SlotDto>> GetAvailableSlotsAsync(int doctorId, DateOnly date, CancellationToken ct = default)
     {
         var schedules = await _doctors.GetSchedulesAsync(doctorId, date.DayOfWeek, ct);
@@ -94,6 +149,47 @@ public sealed class VisitService : IVisitService
 
         return new BookingResult(BookingOutcome.Created, Map(visit));
     }
+
+    public async Task<VisitMutationResult> RescheduleAsync(int ownerId, int visitId, RescheduleVisitDto dto, CancellationToken ct = default)
+    {
+        var visit = await _visits.GetTrackedByIdAsync(visitId, ct);
+        if (visit is null || visit.Pet.OwnerId != ownerId)
+            return new VisitMutationResult(VisitMutationOutcome.NotFound, null);
+
+        if (!IsEditable(visit))
+            return new VisitMutationResult(VisitMutationOutcome.NotEditable, null);
+
+        var scheduledUtc = dto.ScheduledAt.ToUniversalTime();
+        if (scheduledUtc <= DateTime.UtcNow
+            || !await IsWithinScheduleAsync(visit.DoctorId, scheduledUtc, ct)
+            || await _visits.SlotTakenAsync(visit.DoctorId, scheduledUtc, visitId, ct))
+            return new VisitMutationResult(VisitMutationOutcome.SlotUnavailable, null);
+
+        visit.ScheduledAt = scheduledUtc;
+        await _visits.SaveChangesAsync(ct);
+
+        return new VisitMutationResult(VisitMutationOutcome.Ok, Map(visit));
+    }
+
+    public async Task<VisitMutationResult> CancelAsync(int ownerId, int visitId, CancellationToken ct = default)
+    {
+        var visit = await _visits.GetTrackedByIdAsync(visitId, ct);
+        if (visit is null || visit.Pet.OwnerId != ownerId)
+            return new VisitMutationResult(VisitMutationOutcome.NotFound, null);
+
+        if (!IsEditable(visit))
+            return new VisitMutationResult(VisitMutationOutcome.NotEditable, null);
+
+        visit.Status = VisitStatus.Odwolana;
+        await _visits.SaveChangesAsync(ct);
+
+        return new VisitMutationResult(VisitMutationOutcome.Ok, Map(visit));
+    }
+
+    private static bool IsEditable(Visit visit) =>
+        visit.Status != VisitStatus.Odwolana
+        && visit.Status != VisitStatus.Zakonczona
+        && visit.ScheduledAt > DateTime.UtcNow;
 
     private async Task<bool> IsWithinScheduleAsync(int doctorId, DateTime scheduledUtc, CancellationToken ct)
     {

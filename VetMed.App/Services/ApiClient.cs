@@ -49,6 +49,20 @@ public class ApiClient
 
     public string? LastError { get; private set; }
 
+    public async Task<T?> PatchAsync<T>(string path, object body)
+    {
+        var content = new StringContent(JsonSerializer.Serialize(body, _serializeOptions), Encoding.UTF8, "application/json");
+        var response = await _http.PatchAsync(path, content);
+        if (!response.IsSuccessStatusCode)
+        {
+            LastError = $"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+            return default;
+        }
+        LastError = null;
+        var json = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<T>(json, _jsonOptions);
+    }
+
     public async Task<T?> PutAsync<T>(string path, object body)
     {
         var content = new StringContent(JsonSerializer.Serialize(body, _serializeOptions), Encoding.UTF8, "application/json");

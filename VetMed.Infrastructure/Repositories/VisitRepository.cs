@@ -36,6 +36,12 @@ public class VisitRepository : IVisitRepository
             .Include(v => v.Pet)
             .FirstOrDefaultAsync(v => v.Id == id, ct);
 
+    public async Task<Visit?> GetTrackedByIdAsync(int id, CancellationToken ct = default) =>
+        await _db.Visits
+            .Include(v => v.Doctor)
+            .Include(v => v.Pet)
+            .FirstOrDefaultAsync(v => v.Id == id, ct);
+
     public async Task<IReadOnlyList<Visit>> GetActiveByDoctorOnDateAsync(int doctorId, DateTime dayStartUtc, DateTime dayEndUtc, CancellationToken ct = default) =>
         await _db.Visits
             .AsNoTracking()

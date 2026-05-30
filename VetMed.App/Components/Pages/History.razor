@@ -35,7 +35,7 @@
             <div class="timeline">
                 @foreach (var v in FilteredVisits)
                 {
-                    <div class="timeline-item" @key="v.Id">
+                    <div class="timeline-item" @key="v.Id" @onclick='() => Nav.NavigateTo($"/visits/{v.Id}")' style="cursor:pointer">
                         <div class="tl-left">
                             <div class="tl-dot" style="background:@VisitColor(v.Type); box-shadow: 0 0 8px @VisitColor(v.Type);"></div>
                             <div class="tl-line"></div>

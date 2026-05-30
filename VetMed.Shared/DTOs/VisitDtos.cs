@@ -20,6 +20,10 @@ public record CreateVisitDto(
     int DoctorId,
     string? Notes);
 
+public record RescheduleVisitDto(DateTime ScheduledAt);
+
 public record DoctorDto(int Id, string FullName, string Specialization, bool IsAvailable);
 
 public record SlotDto(string Time, bool Available);
+
+public record DayAvailabilityDto(DateOnly Date, bool HasFreeSlots);
