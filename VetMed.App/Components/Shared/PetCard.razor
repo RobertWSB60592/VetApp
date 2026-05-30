@@ -3,7 +3,14 @@
 
 <div class="pet-card" @onclick="() => OnClick.InvokeAsync()">
     <div class="pet-card-top">
-        <div class="pet-emoji-wrap">@SpeciesEmoji(Pet.Species)</div>
+        @if (!string.IsNullOrEmpty(Pet.ImageUrl))
+        {
+            <img class="pet-photo" src="@Pet.ImageUrl" alt="@Pet.Name" />
+        }
+        else
+        {
+            <div class="pet-emoji-wrap">@PetVisuals.Emoji(Pet.Species)</div>
+        }
         <div class="pet-age-badge">@PetAge(Pet.Born)</div>
     </div>
     <div class="pet-card-info">
@@ -22,15 +29,6 @@
 @code {
     [Parameter, EditorRequired] public PetDto Pet { get; set; } = default!;
     [Parameter] public EventCallback OnClick { get; set; }
-
-    private static string SpeciesEmoji(Species s) => s switch
-    {
-        Species.Kot    => "🐱",
-        Species.Pies   => "🐶",
-        Species.Krolik => "🐰",
-        Species.Ptak   => "🐦",
-        _              => "🐾"
-    };
 
     private static string PetAge(DateOnly born)
     {
@@ -73,6 +71,8 @@
         font-size: 44px;
         line-height: 1;
     }
+
+    .pet-photo { width: 100%; height: 100%; object-fit: cover; }
 
     .pet-age-badge {
         position: absolute;

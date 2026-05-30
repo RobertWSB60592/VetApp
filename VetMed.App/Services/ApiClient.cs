@@ -67,7 +67,12 @@ public class ApiClient
     {
         var content = new StringContent(JsonSerializer.Serialize(body, _serializeOptions), Encoding.UTF8, "application/json");
         var response = await _http.PutAsync(path, content);
-        if (!response.IsSuccessStatusCode) return default;
+        if (!response.IsSuccessStatusCode)
+        {
+            LastError = $"HTTP {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync()}";
+            return default;
+        }
+        LastError = null;
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<T>(json, _jsonOptions);
     }

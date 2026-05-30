@@ -7,11 +7,18 @@ public class Pet
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public Species Species { get; set; }
+    public string Species { get; set; } = string.Empty;
     public string? Breed { get; set; }
     public decimal? WeightKg { get; set; }
     public DateOnly Born { get; set; }
     public string? ImageUrl { get; set; }
+
+    public PetSex Sex { get; set; } = PetSex.Nieznana;
+    public bool Sterilized { get; set; }
+    public string? MicrochipNumber { get; set; }
+    public string? Color { get; set; }
+    public string? Notes { get; set; }
+    public bool IsArchived { get; set; }
 
     public int OwnerId { get; set; }
     public Owner Owner { get; set; } = null!;

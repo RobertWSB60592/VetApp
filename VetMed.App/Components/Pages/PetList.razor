@@ -24,7 +24,14 @@
                 var petId = pet.Id;
                 <div class="grid-card" @onclick="() => Nav.NavigateTo(PetRoute(petId))" @key="pet.Id">
                     <div class="card-top">
-                        <div class="card-emoji">@SpeciesEmoji(pet.Species)</div>
+                        @if (!string.IsNullOrEmpty(pet.ImageUrl))
+                        {
+                            <img class="card-photo" src="@pet.ImageUrl" alt="@pet.Name" />
+                        }
+                        else
+                        {
+                            <div class="card-emoji">@PetVisuals.Emoji(pet.Species)</div>
+                        }
                         <div class="card-age-badge">@PetAge(pet.Born)</div>
                     </div>
                     <div class="card-body">
@@ -38,8 +45,23 @@
                             {
                                 <span class="tag">@pet.WeightKg kg</span>
                             }
-                            <span class="tag tag-mint">@SpeciesLabel(pet.Species)</span>
+                            <span class="tag tag-mint">@pet.Species</span>
                         </div>
+                        @if (pendingDeleteId == petId)
+                        {
+                            <div class="card-actions">
+                                <span class="confirm-text">Usunąć?</span>
+                                <button class="act-btn act-danger" @onclick="() => ArchiveAsync(petId)" @onclick:stopPropagation="true">Tak</button>
+                                <button class="act-btn" @onclick="() => pendingDeleteId = null" @onclick:stopPropagation="true">Nie</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card-actions">
+                                <button class="act-btn" @onclick='() => Nav.NavigateTo($"/pets/{petId}/edit")' @onclick:stopPropagation="true">Edytuj</button>
+                                <button class="act-btn act-danger" @onclick="() => pendingDeleteId = petId" @onclick:stopPropagation="true">Usuń</button>
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -54,6 +76,7 @@
 @code {
     private List<PetDto> pets = new();
     private bool loading = true;
+    private int? pendingDeleteId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,25 +86,15 @@
         finally { loading = false; }
     }
 
+    private async Task ArchiveAsync(int id)
+    {
+        pendingDeleteId = null;
+        var ok = await PetApi.DeletePetAsync(id);
+        if (ok)
+            pets = pets.Where(p => p.Id != id).ToList();
+    }
+
     private static string PetRoute(int id) => $"/pets/{id}";
-
-    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
-    {
-        VetMed.Shared.Enums.Species.Kot    => "🐱",
-        VetMed.Shared.Enums.Species.Pies   => "🐶",
-        VetMed.Shared.Enums.Species.Krolik => "🐰",
-        VetMed.Shared.Enums.Species.Ptak   => "🐦",
-        _                                  => "🐾"
-    };
-
-    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
-    {
-        VetMed.Shared.Enums.Species.Pies   => "Pies",
-        VetMed.Shared.Enums.Species.Kot    => "Kot",
-        VetMed.Shared.Enums.Species.Krolik => "Królik",
-        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
-        _                                  => "Inne"
-    };
 
     private static string PetAge(DateOnly born)
     {
@@ -158,6 +171,32 @@
     }
 
     .card-emoji { font-size: 44px; line-height: 1; }
+
+    .card-photo { width: 100%; height: 100%; object-fit: cover; }
+
+    .card-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .confirm-text { font-size: 11px; color: rgba(26,44,34,0.55); margin-right: auto; }
+
+    .act-btn {
+        flex: 1;
+        background: rgba(26,44,34,0.06);
+        border: 1px solid rgba(60,184,122,0.2);
+        border-radius: 9px;
+        padding: 6px 0;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        color: rgba(26,44,34,0.7);
+        cursor: pointer;
+    }
+
+    .act-danger { color: #EF5350; border-color: rgba(239,83,80,0.3); background: rgba(239,83,80,0.08); }
 
     .card-age-badge {
         position: absolute;

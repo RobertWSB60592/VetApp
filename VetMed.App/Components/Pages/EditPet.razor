@@ -1,4 +1,4 @@
-@page "/pets/add"
+@page "/pets/{Id:int}/edit"
 @using Microsoft.Maui.Media
 @using Microsoft.Maui.Storage
 @inject IPetApiService PetApi
@@ -7,30 +7,24 @@
 
 <div class="add-pet-page">
     <div class="page-header">
-        <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>
+        <button class="back-btn" @onclick='() => Nav.NavigateTo($"/pets/{Id}")'>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 18 9 12 15 6"/>
             </svg>
         </button>
         <div>
-            <div class="page-title">Dodaj zwierzaka</div>
-            <div class="page-sub">Uzupełnij profil pupila</div>
+            <div class="page-title">Edytuj zwierzaka</div>
+            <div class="page-sub">Zaktualizuj profil pupila</div>
         </div>
     </div>
 
-    @if (success)
+    @if (loading)
     {
-        <div class="success-screen">
-            <div class="success-rings">
-                <div class="ring ring-1"></div>
-                <div class="ring ring-2"></div>
-                <div class="ring ring-3"></div>
-                <div class="success-icon">&#x2713;</div>
-            </div>
-            <h2 class="success-title">Dodano @addedName!</h2>
-            <p class="success-sub">Profil zwierzaka jest gotowy</p>
-            <button class="btn-primary" @onclick="GoToProfile">Przejdź do profilu</button>
-        </div>
+        <LoadingSpinner />
+    }
+    else if (notFound)
+    {
+        <p class="error-msg">Nie znaleziono zwierzaka.</p>
     }
     else
     {
@@ -116,14 +110,16 @@
                 <div class="error-msg">@error</div>
             }
 
-            <button class="btn-primary" @onclick="SubmitAsync" disabled="@(loading || string.IsNullOrWhiteSpace(name))">
-                @(loading ? "Dodawanie..." : "Dodaj zwierzaka")
+            <button class="btn-primary" @onclick="SaveAsync" disabled="@(saving || string.IsNullOrWhiteSpace(name))">
+                @(saving ? "Zapisywanie..." : "Zapisz zmiany")
             </button>
         </div>
     }
 </div>
 
 @code {
+    [Parameter] public int Id { get; set; }
+
     private string name = "";
     private string species = "";
     private string? breed;
@@ -136,10 +132,9 @@
     private string? notes;
     private string? imageData;
     private string? error;
-    private bool loading;
-    private bool success;
-    private string addedName = "";
-    private int addedId;
+    private bool loading = true;
+    private bool saving;
+    private bool notFound;
 
     private static readonly string[] speciesSuggestions =
     {
@@ -150,6 +145,39 @@
     {
         VetMed.Shared.Enums.PetSex.Samiec, VetMed.Shared.Enums.PetSex.Samica, VetMed.Shared.Enums.PetSex.Nieznana
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        try
+        {
+            var pet = await PetApi.GetPetAsync(Id);
+            if (pet is null)
+            {
+                notFound = true;
+                return;
+            }
+            name = pet.Name;
+            species = pet.Species;
+            breed = pet.Breed;
+            color = pet.Color;
+            weight = pet.WeightKg;
+            born = pet.Born.ToDateTime(TimeOnly.MinValue);
+            sex = pet.Sex;
+            sterilized = pet.Sterilized;
+            microchip = pet.MicrochipNumber;
+            notes = pet.Notes;
+            imageData = pet.ImageUrl;
+        }
+        catch
+        {
+            notFound = true;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
 
     private async Task PickPhotoAsync()
     {
@@ -174,7 +202,7 @@
         }
     }
 
-    private async Task SubmitAsync()
+    private async Task SaveAsync()
     {
         error = null;
         if (string.IsNullOrWhiteSpace(name))
@@ -188,10 +216,10 @@
             return;
         }
 
-        loading = true;
+        saving = true;
         try
         {
-            var dto = new CreatePetDto(
+            var dto = new UpdatePetDto(
                 name.Trim(),
                 species.Trim(),
                 string.IsNullOrWhiteSpace(breed) ? null : breed.Trim(),
@@ -204,15 +232,13 @@
                 string.IsNullOrWhiteSpace(color) ? null : color.Trim(),
                 string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
 
-            var result = await PetApi.CreatePetAsync(dto);
+            var result = await PetApi.UpdatePetAsync(Id, dto);
             if (result is null)
             {
-                error = Api.LastError ?? "Nie udało się dodać zwierzaka. Spróbuj ponownie.";
+                error = Api.LastError ?? "Nie udało się zapisać zmian.";
                 return;
             }
-            addedName = result.Name;
-            addedId = result.Id;
-            success = true;
+            Nav.NavigateTo($"/pets/{Id}");
         }
         catch
         {
@@ -220,11 +246,9 @@
         }
         finally
         {
-            loading = false;
+            saving = false;
         }
     }
-
-    private void GoToProfile() => Nav.NavigateTo($"/pets/{addedId}");
 
     private static string SexLabel(VetMed.Shared.Enums.PetSex s) => s switch
     {
@@ -235,234 +259,86 @@
 }
 
 <style>
-    .add-pet-page {
-        padding: 20px 16px 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-    }
+    .add-pet-page { padding: 20px 16px 32px; display: flex; flex-direction: column; }
 
-    .page-header {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        margin-bottom: 28px;
-        padding-top: 8px;
-    }
+    .page-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; padding-top: 8px; }
 
     .back-btn {
-        width: 40px;
-        height: 40px;
+        width: 40px; height: 40px;
         background: rgba(26,44,34,0.07);
         border: 1px solid rgba(60,184,122,0.2);
-        border-radius: 12px;
-        color: #1A2C22;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        flex-shrink: 0;
-        transition: background 0.2s;
+        border-radius: 12px; color: #1A2C22;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; flex-shrink: 0;
     }
 
-    .back-btn:hover { background: rgba(60,184,122,0.1); }
+    .page-title { font-size: 20px; font-weight: 800; color: #1A2C22; }
+    .page-sub { font-size: 12px; color: rgba(26,44,34,0.45); margin-top: 2px; }
 
-    .page-title {
-        font-size: 20px;
-        font-weight: 800;
-        color: #1A2C22;
-    }
-
-    .page-sub {
-        font-size: 12px;
-        color: rgba(26,44,34,0.45);
-        margin-top: 2px;
-    }
-
-    .form-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-
-    .field {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .field-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: rgba(26,44,34,0.6);
-    }
-
+    .form-wrap { display: flex; flex-direction: column; gap: 18px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field-label { font-size: 13px; font-weight: 600; color: rgba(26,44,34,0.6); }
     .required { color: var(--danger); }
 
     .glass-input {
         width: 100%;
         background: rgba(26,44,34,0.07);
         border: 1px solid rgba(60,184,122,0.2);
-        color: #1A2C22;
-        border-radius: 14px;
-        padding: 14px 16px;
-        font-size: 15px;
+        color: #1A2C22; border-radius: 14px;
+        padding: 14px 16px; font-size: 15px;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        outline: none;
-        transition: border-color 0.2s;
+        outline: none; transition: border-color 0.2s;
     }
 
     .glass-input:focus { border-color: rgba(60,184,122,0.6); }
     .glass-input::placeholder { color: rgba(26,44,34,0.25); }
+    .glass-textarea { resize: vertical; min-height: 70px; }
 
-    .chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .chip {
         background: rgba(26,44,34,0.06);
         border: 1px solid rgba(60,184,122,0.2);
         color: rgba(26,44,34,0.6);
-        border-radius: 20px;
-        padding: 9px 16px;
-        font-size: 13px;
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        border-radius: 20px; padding: 9px 16px;
+        font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
-        transition: background 0.2s, border-color 0.2s, color 0.2s;
     }
 
-    .chip-active {
-        background: rgba(60,184,122,0.18);
-        border-color: #3CB87A;
-        color: #3CB87A;
-        font-weight: 700;
-    }
+    .chip-active { background: rgba(60,184,122,0.18); border-color: #3CB87A; color: #3CB87A; font-weight: 700; }
 
-    .photo-field {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-    }
+    .photo-field { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 6px; }
 
     .photo-circle {
-        width: 96px;
-        height: 96px;
-        border-radius: 50%;
+        width: 96px; height: 96px; border-radius: 50%;
         background: rgba(60,184,122,0.1);
         border: 2px dashed rgba(60,184,122,0.4);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        overflow: hidden;
-        padding: 0;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; overflow: hidden; padding: 0;
     }
 
     .photo-preview { width: 100%; height: 100%; object-fit: cover; }
     .photo-plus { font-size: 34px; color: rgba(60,184,122,0.7); line-height: 1; }
     .photo-label { font-size: 12px; color: rgba(26,44,34,0.5); }
 
-    .glass-textarea { resize: vertical; min-height: 70px; }
-
-    .toggle-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-    }
-
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
     .toggle { width: 20px; height: 20px; accent-color: #3CB87A; cursor: pointer; }
 
     .error-msg {
         background: rgba(255,112,112,0.1);
         border: 1px solid rgba(255,112,112,0.3);
-        border-radius: 12px;
-        padding: 12px 14px;
-        font-size: 13px;
-        color: #FF7070;
+        border-radius: 12px; padding: 12px 14px;
+        font-size: 13px; color: #FF7070;
     }
 
     .btn-primary {
-        background: #3CB87A;
-        color: #F8FCF9;
-        border: none;
-        border-radius: 16px;
-        padding: 15px;
-        font-weight: 800;
-        font-size: 15px;
+        background: #3CB87A; color: #F8FCF9; border: none;
+        border-radius: 16px; padding: 15px;
+        font-weight: 800; font-size: 15px;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        width: 100%;
-        cursor: pointer;
-        transition: opacity 0.2s, transform 0.15s;
-        margin-top: 4px;
+        width: 100%; cursor: pointer; margin-top: 4px;
     }
 
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-primary:active:not(:disabled) { transform: scale(0.98); }
-
-    .success-screen {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        gap: 16px;
-        text-align: center;
-        flex: 1;
-    }
-
-    .success-rings {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 8px;
-    }
-
-    .ring {
-        position: absolute;
-        border-radius: 50%;
-        border: 2px solid rgba(60,184,122,0.3);
-        animation: pulse-ring 2s ease-out infinite;
-    }
-
-    .ring-1 { width: 120px; height: 120px; animation-delay: 0s; }
-    .ring-2 { width: 90px; height: 90px; animation-delay: 0.4s; }
-    .ring-3 { width: 60px; height: 60px; animation-delay: 0.8s; }
-
-    @@keyframes pulse-ring {
-        0%   { transform: scale(0.9); opacity: 0.8; }
-        100% { transform: scale(1.1); opacity: 0; }
-    }
-
-    .success-icon {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        background: #3CB87A;
-        color: #F8FCF9;
-        font-size: 26px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-    }
-
-    .success-title {
-        font-size: 24px;
-        font-weight: 800;
-        color: #1A2C22;
-    }
-
-    .success-sub {
-        font-size: 14px;
-        color: rgba(26,44,34,0.45);
-    }
 </style>

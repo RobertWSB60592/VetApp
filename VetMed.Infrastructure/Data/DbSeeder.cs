@@ -57,10 +57,10 @@ public static class DbSeeder
 
         var pets = new List<Pet>
         {
-            new() { Name = "Ozzy",    Species = Species.Kot,  Breed = "Brytyjski krótkowłosy", WeightKg = 4.8m,  Born = new DateOnly(2019, 3, 12), Owner = owner },
-            new() { Name = "Ryszard", Species = Species.Pies, Breed = "Labrador retriever",     WeightKg = 28.5m, Born = new DateOnly(2018, 7, 4),  Owner = owner },
-            new() { Name = "Atos",    Species = Species.Kot,  Breed = "Maine Coon",             WeightKg = 6.1m,  Born = new DateOnly(2021, 1, 20), Owner = owner },
-            new() { Name = "Freddie", Species = Species.Pies, Breed = "Beagle",                 WeightKg = 11.2m, Born = new DateOnly(2020, 9, 8),  Owner = owner }
+            new() { Name = "Ozzy",    Species = "Kot",  Breed = "Brytyjski krótkowłosy", WeightKg = 4.8m,  Born = new DateOnly(2019, 3, 12), Sex = PetSex.Samiec, Owner = owner },
+            new() { Name = "Ryszard", Species = "Pies", Breed = "Labrador retriever",     WeightKg = 28.5m, Born = new DateOnly(2018, 7, 4),  Sex = PetSex.Samiec, Owner = owner },
+            new() { Name = "Atos",    Species = "Kot",  Breed = "Maine Coon",             WeightKg = 6.1m,  Born = new DateOnly(2021, 1, 20), Sex = PetSex.Samiec, Owner = owner },
+            new() { Name = "Freddie", Species = "Pies", Breed = "Beagle",                 WeightKg = 11.2m, Born = new DateOnly(2020, 9, 8),  Sex = PetSex.Samiec, Owner = owner }
         };
         db.Pets.AddRange(pets);
 

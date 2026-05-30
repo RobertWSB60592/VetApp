@@ -20,6 +20,9 @@ public class PetApiService : IPetApiService
     public Task<PetDto?> CreatePetAsync(CreatePetDto dto) =>
         _api.PostAsync<PetDto>("api/pets", dto);
 
+    public Task<PetDto?> UpdatePetAsync(int id, UpdatePetDto dto) =>
+        _api.PutAsync<PetDto>($"api/pets/{id}", dto);
+
     public async Task<bool> DeletePetAsync(int id) =>
         await _api.DeleteAsync($"api/pets/{id}");
 }

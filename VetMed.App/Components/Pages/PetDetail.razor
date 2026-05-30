@@ -23,10 +23,17 @@
                     <polyline points="15 18 9 12 15 6"/>
                 </svg>
             </button>
-            <div class="hero-emoji">@SpeciesEmoji(pet.Species)</div>
+            @if (!string.IsNullOrEmpty(pet.ImageUrl))
+            {
+                <img class="hero-photo" src="@pet.ImageUrl" alt="@pet.Name" />
+            }
+            else
+            {
+                <div class="hero-emoji">@PetVisuals.Emoji(pet.Species)</div>
+            }
             <h1 class="hero-name">@pet.Name</h1>
             <div class="hero-tags">
-                <span class="hero-tag">@SpeciesLabel(pet.Species)</span>
+                <span class="hero-tag">@pet.Species</span>
                 @if (!string.IsNullOrEmpty(pet.Breed))
                 {
                     <span class="hero-tag">@pet.Breed</span>
@@ -47,7 +54,18 @@
                 <div class="info-card">
                     <div class="info-row">
                         <span class="info-label">Gatunek</span>
-                        <span class="info-value">@SpeciesLabel(pet.Species)</span>
+                        <span class="info-value">@pet.Species</span>
+                    </div>
+                    @if (pet.Sex != VetMed.Shared.Enums.PetSex.Nieznana)
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Płeć</span>
+                            <span class="info-value">@SexLabel(pet.Sex)</span>
+                        </div>
+                    }
+                    <div class="info-row">
+                        <span class="info-label">Sterylizacja/kastracja</span>
+                        <span class="info-value">@(pet.Sterilized ? "Tak" : "Nie")</span>
                     </div>
                     @if (!string.IsNullOrEmpty(pet.Breed))
                     {
@@ -71,6 +89,27 @@
                         <span class="info-label">Wiek</span>
                         <span class="info-value info-value-mint">@PetAge(pet.Born)</span>
                     </div>
+                    @if (!string.IsNullOrEmpty(pet.Color))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Kolor</span>
+                            <span class="info-value">@pet.Color</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(pet.MicrochipNumber))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Mikrochip</span>
+                            <span class="info-value">@pet.MicrochipNumber</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(pet.Notes))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Uwagi</span>
+                            <span class="info-value">@pet.Notes</span>
+                        </div>
+                    }
                 </div>
             }
             else if (activeTab == 1)
@@ -158,22 +197,11 @@
         finally { visitsLoading = false; }
     }
 
-    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
+    private static string SexLabel(VetMed.Shared.Enums.PetSex s) => s switch
     {
-        VetMed.Shared.Enums.Species.Kot    => "🐱",
-        VetMed.Shared.Enums.Species.Pies   => "🐶",
-        VetMed.Shared.Enums.Species.Krolik => "🐰",
-        VetMed.Shared.Enums.Species.Ptak   => "🐦",
-        _                                  => "🐾"
-    };
-
-    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
-    {
-        VetMed.Shared.Enums.Species.Pies   => "Pies",
-        VetMed.Shared.Enums.Species.Kot    => "Kot",
-        VetMed.Shared.Enums.Species.Krolik => "Królik",
-        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
-        _                                  => "Inne"
+        VetMed.Shared.Enums.PetSex.Samiec => "Samiec",
+        VetMed.Shared.Enums.PetSex.Samica => "Samica",
+        _                                 => "Nieznana"
     };
 
     private static string PetAge(DateOnly born)
@@ -251,6 +279,15 @@
     .back-btn:hover { background: rgba(60,184,122,0.1); }
 
     .hero-emoji { font-size: 72px; line-height: 1; margin-bottom: 14px; }
+
+    .hero-photo {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 14px;
+        border: 3px solid rgba(60,184,122,0.3);
+    }
 
     .hero-name {
         font-size: 28px;

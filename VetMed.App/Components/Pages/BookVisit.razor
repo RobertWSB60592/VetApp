@@ -52,10 +52,10 @@
                             var pv = p;
                             <button class="pet-pick @(selectedPetId == pv.Id ? "pet-pick-active" : "")"
                                     @onclick="() => { selectedPetId = pv.Id; step = 2; }" @key="p.Id">
-                                <span class="pet-emoji">@SpeciesEmoji(pv.Species)</span>
+                                <span class="pet-emoji">@PetVisuals.Emoji(pv.Species)</span>
                                 <span class="pet-pick-info">
                                     <span class="pet-pick-name">@pv.Name</span>
-                                    <span class="pet-pick-sub">@SpeciesLabel(pv.Species)@(string.IsNullOrEmpty(pv.Breed) ? "" : " · " + pv.Breed)</span>
+                                    <span class="pet-pick-sub">@pv.Species@(string.IsNullOrEmpty(pv.Breed) ? "" : " · " + pv.Breed)</span>
                                 </span>
                             </button>
                         }
@@ -255,24 +255,6 @@
     }
 
     private static string DowShort(DayOfWeek d) => dowShort[(int)d];
-
-    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
-    {
-        VetMed.Shared.Enums.Species.Kot    => "🐱",
-        VetMed.Shared.Enums.Species.Pies   => "🐶",
-        VetMed.Shared.Enums.Species.Krolik => "🐰",
-        VetMed.Shared.Enums.Species.Ptak   => "🐦",
-        _                                  => "🐾"
-    };
-
-    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
-    {
-        VetMed.Shared.Enums.Species.Pies   => "Pies",
-        VetMed.Shared.Enums.Species.Kot    => "Kot",
-        VetMed.Shared.Enums.Species.Krolik => "Królik",
-        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
-        _                                  => "Inne"
-    };
 
     private record VisitTypeOption(VetMed.Shared.Enums.VisitType Type, string Icon, string Label);
 

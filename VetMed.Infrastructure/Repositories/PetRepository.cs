@@ -13,7 +13,7 @@ public class PetRepository : IPetRepository
     public async Task<IReadOnlyList<Pet>> GetByOwnerAsync(int ownerId, CancellationToken ct = default) =>
         await _db.Pets
             .AsNoTracking()
-            .Where(p => p.OwnerId == ownerId)
+            .Where(p => p.OwnerId == ownerId && !p.IsArchived)
             .OrderBy(p => p.Name)
             .ToListAsync(ct);
 
