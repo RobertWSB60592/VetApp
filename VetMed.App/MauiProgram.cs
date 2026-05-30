@@ -22,8 +22,14 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
+#if ANDROID
+        var apiBase = "http://192.168.1.11:5100/";
+#else
+        var apiBase = "http://127.0.0.1:5100/";
+#endif
+
         builder.Services.AddSingleton<ApiClient>(_ =>
-            new ApiClient(new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5100/") }));
+            new ApiClient(new HttpClient { BaseAddress = new Uri(apiBase) }));
 
         builder.Services.AddSingleton<AppState>();
         builder.Services.AddTransient<IAuthApiService, AuthApiService>();

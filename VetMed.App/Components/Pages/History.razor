@@ -90,7 +90,7 @@
         VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
         VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
         VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#3CB87A"
+        _                                          => "#E8906A"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -134,7 +134,7 @@
     .page-title {
         font-size: 24px;
         font-weight: 800;
-        color: #1A2C22;
+        color: #F5EDE5;
     }
 
     .filter-chips {
@@ -149,14 +149,14 @@
     .filter-chips::-webkit-scrollbar { display: none; }
 
     .chip {
-        background: rgba(26,44,34,0.06);
-        border: 1px solid rgba(60,184,122,0.2);
+        background: rgba(245,237,229,0.06);
+        border: 1px solid rgba(232,144,106,0.2);
         border-radius: 20px;
         padding: 8px 16px;
         font-size: 13px;
         font-weight: 600;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        color: rgba(26,44,34,0.55);
+        color: rgba(245,237,229,0.55);
         cursor: pointer;
         white-space: nowrap;
         transition: background 0.2s, border-color 0.2s, color 0.2s;
@@ -164,9 +164,9 @@
     }
 
     .chip-active {
-        background: rgba(60,184,122,0.18);
-        border-color: #3CB87A;
-        color: #3CB87A;
+        background: rgba(232,144,106,0.18);
+        border-color: #E8906A;
+        color: #E8906A;
     }
 
     .timeline {
@@ -199,17 +199,17 @@
     .tl-line {
         width: 2px;
         flex: 1;
-        background: rgba(60,184,122,0.15);
+        background: rgba(232,144,106,0.15);
         margin-top: 6px;
     }
 
     .tl-card {
         flex: 1;
-        background: #FFFFFF;
-        border: 1px solid rgba(60,184,122,0.2);
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
         border-radius: 16px;
         padding: 14px 16px;
-        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
     .tl-top {
@@ -228,19 +228,19 @@
 
     .tl-date {
         font-size: 12px;
-        color: rgba(26,44,34,0.4);
+        color: rgba(245,237,229,0.4);
     }
 
     .tl-pet-name {
         font-size: 15px;
         font-weight: 700;
-        color: #1A2C22;
+        color: #F5EDE5;
         margin-bottom: 2px;
     }
 
     .tl-doctor {
         font-size: 12px;
-        color: rgba(26,44,34,0.45);
+        color: rgba(245,237,229,0.45);
         margin-bottom: 10px;
     }
 
@@ -252,7 +252,7 @@
 
     .tl-time {
         font-size: 12px;
-        color: rgba(26,44,34,0.4);
+        color: rgba(245,237,229,0.4);
     }
 
     .status-badge {
@@ -262,9 +262,9 @@
         padding: 3px 9px;
     }
 
-    .badge-planned   { background: rgba(60,184,122,0.12); color: #3CB87A; }
+    .badge-planned   { background: rgba(232,144,106,0.12); color: #E8906A; }
     .badge-confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
-    .badge-done      { background: rgba(26,44,34,0.08); color: rgba(26,44,34,0.5); }
+    .badge-done      { background: rgba(245,237,229,0.08); color: rgba(245,237,229,0.5); }
     .badge-cancelled { background: rgba(239,83,80,0.12);  color: #EF5350; }
 
     .empty-state {
@@ -273,7 +273,7 @@
         align-items: center;
         gap: 12px;
         padding: 64px 20px;
-        color: rgba(26,44,34,0.35);
+        color: rgba(245,237,229,0.35);
         text-align: center;
     }
 
