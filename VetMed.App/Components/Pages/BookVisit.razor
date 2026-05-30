@@ -15,12 +15,12 @@
         </button>
         <div>
             <div class="page-title">Umów wizytę</div>
-            <div class="page-sub">Krok @step z 4</div>
+            <div class="page-sub">Krok @step z 5</div>
         </div>
     </div>
 
     <div class="steps-indicator">
-        @for (int i = 1; i <= 4; i++)
+        @for (int i = 1; i <= 5; i++)
         {
             var si = i;
             <div class="step-dot @(step == si ? "step-active" : step > si ? "step-done" : "")"></div>
@@ -36,20 +36,51 @@
         @if (step == 1)
         {
             <div class="step-section">
+                <h2 class="step-title">Wybierz zwierzaka</h2>
+                @if (pets.Count == 0)
+                {
+                    <div class="pet-empty">
+                        <p class="slots-empty">Nie masz jeszcze zwierzaków.</p>
+                        <button class="btn-next" @onclick='() => Nav.NavigateTo("/pets/add")'>Dodaj zwierzaka</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="pet-pick-list">
+                        @foreach (var p in pets)
+                        {
+                            var pv = p;
+                            <button class="pet-pick @(selectedPetId == pv.Id ? "pet-pick-active" : "")"
+                                    @onclick="() => { selectedPetId = pv.Id; step = 2; }" @key="p.Id">
+                                <span class="pet-emoji">@SpeciesEmoji(pv.Species)</span>
+                                <span class="pet-pick-info">
+                                    <span class="pet-pick-name">@pv.Name</span>
+                                    <span class="pet-pick-sub">@SpeciesLabel(pv.Species)@(string.IsNullOrEmpty(pv.Breed) ? "" : " · " + pv.Breed)</span>
+                                </span>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else if (step == 2)
+        {
+            <div class="step-section">
                 <h2 class="step-title">Rodzaj wizyty</h2>
                 <div class="type-grid">
                     @foreach (var t in visitTypes)
                     {
                         var tv = t;
-                        <button class="type-card @(selectedType == tv.Type ? "type-card-active" : "")" @onclick="() => { selectedType = tv.Type; step = 2; }">
+                        <button class="type-card @(selectedType == tv.Type ? "type-card-active" : "")" @onclick="() => { selectedType = tv.Type; step = 3; }">
                             <span class="type-icon">@tv.Icon</span>
                             <span class="type-label">@tv.Label</span>
                         </button>
                     }
                 </div>
+                <button class="btn-back-step" @onclick="() => step = 1">Wróć</button>
             </div>
         }
-        else if (step == 2)
+        else if (step == 3)
         {
             <div class="step-section">
                 <h2 class="step-title">Wybierz lekarza</h2>
@@ -68,10 +99,10 @@
                         </span>
                     </button>
                 }
-                <button class="btn-back-step" @onclick="() => step = 1">Wróć</button>
+                <button class="btn-back-step" @onclick="() => step = 2">Wróć</button>
             </div>
         }
-        else if (step == 3)
+        else if (step == 4)
         {
             <div class="step-section">
                 <h2 class="step-title">Wybierz termin</h2>
@@ -130,12 +161,12 @@
                 }
 
                 <div class="step-nav">
-                    <button class="btn-back-step" @onclick="() => step = 2">Wróć</button>
-                    <button class="btn-next" @onclick="() => step = 4" disabled="@string.IsNullOrEmpty(selectedTime)">Dalej</button>
+                    <button class="btn-back-step" @onclick="() => step = 3">Wróć</button>
+                    <button class="btn-next" @onclick="() => step = 5" disabled="@string.IsNullOrEmpty(selectedTime)">Dalej</button>
                 </div>
             </div>
         }
-        else if (step == 4)
+        else if (step == 5)
         {
             <div class="step-section">
                 <h2 class="step-title">Notatki (opcjonalnie)</h2>
@@ -160,18 +191,10 @@
                         <span class="s-label">Godzina</span>
                         <span class="s-value">@selectedTime</span>
                     </div>
-                    @if (pets.Count > 0)
-                    {
-                        <div class="summary-row">
-                            <span class="s-label">Zwierzak</span>
-                            <select class="s-select" @bind="selectedPetId">
-                                @foreach (var p in pets)
-                                {
-                                    <option value="@p.Id" @key="p.Id">@p.Name</option>
-                                }
-                            </select>
-                        </div>
-                    }
+                    <div class="summary-row">
+                        <span class="s-label">Zwierzak</span>
+                        <span class="s-value">@(pets.FirstOrDefault(p => p.Id == selectedPetId)?.Name ?? "-")</span>
+                    </div>
                 </div>
 
                 @if (!string.IsNullOrEmpty(error))
@@ -180,7 +203,7 @@
                 }
 
                 <div class="step-nav">
-                    <button class="btn-back-step" @onclick="() => step = 3">Wróć</button>
+                    <button class="btn-back-step" @onclick="() => step = 4">Wróć</button>
                     <button class="btn-confirm" @onclick="ConfirmAsync" disabled="@(submitting || !CanSubmit)">
                         @(submitting ? "Rezerwowanie..." : "Potwierdź wizytę")
                     </button>
@@ -233,6 +256,24 @@
 
     private static string DowShort(DayOfWeek d) => dowShort[(int)d];
 
+    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
+    {
+        VetMed.Shared.Enums.Species.Kot    => "🐱",
+        VetMed.Shared.Enums.Species.Pies   => "🐶",
+        VetMed.Shared.Enums.Species.Krolik => "🐰",
+        VetMed.Shared.Enums.Species.Ptak   => "🐦",
+        _                                  => "🐾"
+    };
+
+    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
+    {
+        VetMed.Shared.Enums.Species.Pies   => "Pies",
+        VetMed.Shared.Enums.Species.Kot    => "Kot",
+        VetMed.Shared.Enums.Species.Krolik => "Królik",
+        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
+        _                                  => "Inne"
+    };
+
     private record VisitTypeOption(VetMed.Shared.Enums.VisitType Type, string Icon, string Label);
 
     private static readonly VisitTypeOption[] visitTypes = new[]
@@ -257,9 +298,10 @@
             pets = pTask.Result;
 
             if (PetIdQuery.HasValue && pets.Any(p => p.Id == PetIdQuery.Value))
+            {
                 selectedPetId = PetIdQuery.Value;
-            else if (pets.Count > 0)
-                selectedPetId = pets[0].Id;
+                step = 2;
+            }
         }
         catch { }
         finally { loading = false; }
@@ -269,7 +311,7 @@
     {
         if (!doctor.IsAvailable) return;
         selectedDoctorId = doctor.Id;
-        step = 3;
+        step = 4;
         weekStart = today;
         daySelected = false;
         selectedTime = "";
@@ -667,6 +709,44 @@
     .dot-none { background: transparent; }
 
     .slots-title { font-size: 14px; font-weight: 700; color: #1A2C22; margin: 14px 0 0; }
+
+    .pet-pick-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .pet-pick {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        text-align: left;
+        background: #FFFFFF;
+        border: 1px solid rgba(60,184,122,0.2);
+        border-radius: 16px;
+        padding: 14px 16px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+    .pet-pick-active { border-color: #3CB87A; background: rgba(60,184,122,0.12); }
+    .pet-pick:active { transform: scale(0.98); }
+
+    .pet-emoji {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: rgba(60,184,122,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .pet-pick-info { display: flex; flex-direction: column; gap: 2px; }
+    .pet-pick-name { font-size: 15px; font-weight: 700; color: #1A2C22; }
+    .pet-pick-sub { font-size: 12px; color: rgba(26,44,34,0.5); }
+
+    .pet-empty { display: flex; flex-direction: column; gap: 14px; align-items: stretch; }
 
     .summary-card {
         background: #FFFFFF;
