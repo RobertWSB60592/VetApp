@@ -105,6 +105,7 @@
 
     private static string StatusLabel(VetMed.Shared.Enums.VisitStatus s) => s switch
     {
+        VetMed.Shared.Enums.VisitStatus.Oczekujaca   => "Oczekująca",
         VetMed.Shared.Enums.VisitStatus.Zaplanowana  => "Zaplanowana",
         VetMed.Shared.Enums.VisitStatus.Potwierdzona => "Potwierdzona",
         VetMed.Shared.Enums.VisitStatus.Zakonczona   => "Zakończona",

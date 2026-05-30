@@ -80,7 +80,7 @@
                 </div>
                 <div class="step-nav">
                     <button class="btn-back-step" @onclick="() => step = 2">Wróć</button>
-                    <button class="btn-next" @onclick="() => step = 4" disabled="@(selectedDate < DateTime.Today)">Dalej</button>
+                    <button class="btn-next" @onclick="GoToSlotsAsync" disabled="@(selectedDate < DateTime.Today)">Dalej</button>
                 </div>
             </div>
         }
@@ -88,13 +88,26 @@
         {
             <div class="step-section">
                 <h2 class="step-title">Wybierz godzinę</h2>
-                <div class="slots-grid">
-                    @foreach (var slot in timeSlots)
-                    {
-                        var sv = slot;
-                        <button class="slot @(selectedTime == sv ? "slot-active" : "")" @onclick="() => selectedTime = sv">@sv</button>
-                    }
-                </div>
+                @if (slotsLoading)
+                {
+                    <LoadingSpinner />
+                }
+                else if (slots.Count == 0)
+                {
+                    <p class="slots-empty">Lekarz nie przyjmuje w wybranym dniu. Wybierz inną datę.</p>
+                }
+                else
+                {
+                    <div class="slots-grid">
+                        @foreach (var slot in slots)
+                        {
+                            var sv = slot;
+                            <button class="slot @(selectedTime == sv.Time ? "slot-active" : "") @(!sv.Available ? "slot-taken" : "")"
+                                    disabled="@(!sv.Available)"
+                                    @onclick="() => selectedTime = sv.Time">@sv.Time</button>
+                        }
+                    </div>
+                }
                 <div class="step-nav">
                     <button class="btn-back-step" @onclick="() => step = 3">Wróć</button>
                     <button class="btn-next" @onclick="() => step = 5" disabled="@string.IsNullOrEmpty(selectedTime)">Dalej</button>
@@ -172,12 +185,8 @@
 
     private List<DoctorDto> doctors = new();
     private List<PetDto> pets = new();
-
-    private static readonly string[] timeSlots = new[]
-    {
-        "08:00", "08:30", "09:00", "09:30", "10:00",
-        "10:30", "11:00", "14:00", "14:30", "15:00", "15:30"
-    };
+    private List<SlotDto> slots = new();
+    private bool slotsLoading;
 
     private record VisitTypeOption(VetMed.Shared.Enums.VisitType Type, string Icon, string Label);
 
@@ -211,6 +220,25 @@
         finally { loading = false; }
     }
 
+    private async Task GoToSlotsAsync()
+    {
+        selectedTime = "";
+        step = 4;
+        slotsLoading = true;
+        try
+        {
+            slots = await VisitApi.GetSlotsAsync(selectedDoctorId!.Value, DateOnly.FromDateTime(selectedDate));
+        }
+        catch
+        {
+            slots = new();
+        }
+        finally
+        {
+            slotsLoading = false;
+        }
+    }
+
     private async Task ConfirmAsync()
     {
         error = null;
@@ -224,8 +252,8 @@
         try
         {
             var timeParts = selectedTime.Split(':');
-            var localDt = selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
-            var scheduledAt = DateTime.SpecifyKind(localDt, DateTimeKind.Local).ToUniversalTime();
+            var wallClock = selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
+            var scheduledAt = DateTime.SpecifyKind(wallClock, DateTimeKind.Utc);
 
             var dto = new CreateVisitDto(scheduledAt, selectedType, selectedPetId, selectedDoctorId!.Value, notes);
             var result = await VisitApi.CreateVisitAsync(dto);
@@ -487,6 +515,18 @@
         background: rgba(60,184,122,0.2);
         border-color: #3CB87A;
         color: #3CB87A;
+    }
+
+    .slot-taken {
+        opacity: 0.4;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+
+    .slots-empty {
+        font-size: 13px;
+        color: rgba(26,44,34,0.5);
+        padding: 8px 2px;
     }
 
     .summary-card {

@@ -40,10 +40,19 @@ public sealed class VisitsController : ControllerBase
         return Ok(visits);
     }
 
+    [HttpGet("slots")]
+    [ProducesResponseType(typeof(IReadOnlyList<SlotDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSlots([FromQuery] int doctorId, [FromQuery] DateOnly date, CancellationToken ct)
+    {
+        var slots = await _visits.GetAvailableSlotsAsync(doctorId, date, ct);
+        return Ok(slots);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(VisitDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create([FromBody] CreateVisitDto dto, CancellationToken ct)
     {
         var validation = await _createValidator.ValidateAsync(dto, ct);
@@ -54,14 +63,16 @@ public sealed class VisitsController : ControllerBase
             return ValidationProblem();
         }
 
-        var created = await _visits.CreateAsync(OwnerId, dto, ct);
-        if (created is null)
+        var result = await _visits.CreateAsync(OwnerId, dto, ct);
+        return result.Outcome switch
         {
-            return Problem(
+            BookingOutcome.Created => CreatedAtAction(nameof(GetAll), result.Visit),
+            BookingOutcome.SlotUnavailable => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Wybrany termin jest już zajęty lub poza grafikiem lekarza."),
+            _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                title: "Pet or doctor not found, or pet does not belong to the authenticated owner.");
-        }
-
-        return CreatedAtAction(nameof(GetAll), created);
+                title: "Pet or doctor not found, or pet does not belong to the authenticated owner.")
+        };
     }
 }

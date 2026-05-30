@@ -20,4 +20,10 @@ public class DoctorRepository : IDoctorRepository
         await _db.Doctors
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.Id == id, ct);
+
+    public async Task<IReadOnlyList<DoctorSchedule>> GetSchedulesAsync(int doctorId, DayOfWeek dayOfWeek, CancellationToken ct = default) =>
+        await _db.DoctorSchedules
+            .AsNoTracking()
+            .Where(s => s.DoctorId == doctorId && s.DayOfWeek == dayOfWeek)
+            .ToListAsync(ct);
 }

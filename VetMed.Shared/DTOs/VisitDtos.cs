@@ -21,3 +21,5 @@ public record CreateVisitDto(
     string? Notes);
 
 public record DoctorDto(int Id, string FullName, string Specialization, bool IsAvailable);
+
+public record SlotDto(string Time, bool Available);

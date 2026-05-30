@@ -6,8 +6,15 @@ namespace VetMed.Infrastructure.Data;
 
 public static class DbSeeder
 {
+    private static readonly DayOfWeek[] Workdays =
+    {
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+    };
+
     public static async Task SeedAsync(AppDbContext db, Func<string, string> hashPassword, CancellationToken ct = default)
     {
+        await SeedSchedulesAsync(db, ct);
+
         if (await db.Doctors.AnyAsync(ct) || await db.Owners.AnyAsync(ct))
             return;
 
@@ -18,6 +25,9 @@ public static class DbSeeder
             new() { FullName = "dr Wiśniewska", Specialization = "Dermatologia",      IsAvailable = true }
         };
         db.Doctors.AddRange(doctors);
+
+        foreach (var doctor in doctors)
+            AddWeeklySchedule(db, doctor);
 
         var owner = new Owner
         {
@@ -55,5 +65,32 @@ public static class DbSeeder
         db.Pets.AddRange(pets);
 
         await db.SaveChangesAsync(ct);
+    }
+
+    private static async Task SeedSchedulesAsync(AppDbContext db, CancellationToken ct)
+    {
+        var doctorsWithoutSchedule = await db.Doctors
+            .Where(d => !d.Schedules.Any())
+            .ToListAsync(ct);
+
+        if (doctorsWithoutSchedule.Count == 0)
+            return;
+
+        foreach (var doctor in doctorsWithoutSchedule)
+            AddWeeklySchedule(db, doctor);
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    private static void AddWeeklySchedule(AppDbContext db, Doctor doctor)
+    {
+        foreach (var day in Workdays)
+            db.DoctorSchedules.Add(new DoctorSchedule
+            {
+                Doctor = doctor,
+                DayOfWeek = day,
+                StartTime = new TimeOnly(8, 0),
+                EndTime = new TimeOnly(16, 0)
+            });
     }
 }
