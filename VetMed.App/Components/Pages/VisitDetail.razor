@@ -1,0 +1,435 @@
+@page "/visits/{Id:int}"
+@inject IVisitApiService VisitApi
+@inject ApiClient Api
+@inject NavigationManager Nav
+@using VetMed.Shared.Enums
+
+<div class="detail-page">
+    <div class="page-header">
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/history")'>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <div class="page-title">Szczegóły wizyty</div>
+    </div>
+
+    @if (loading)
+    {
+        <LoadingSpinner />
+    }
+    else if (visit is null)
+    {
+        <div class="empty-state">
+            <span class="empty-icon">&#x1F50D;</span>
+            <p>Nie znaleziono wizyty.</p>
+        </div>
+    }
+    else
+    {
+        <div class="detail-card">
+            <div class="detail-hero">
+                <span class="hero-type" style="color:@VisitColor(visit.Type)">@VisitLabel(visit.Type)</span>
+                <span class="status-badge @StatusClass(visit.Status)">@StatusLabel(visit.Status)</span>
+            </div>
+
+            <div class="detail-row"><span class="d-label">Zwierzak</span><span class="d-value">@visit.PetName</span></div>
+            <div class="detail-row"><span class="d-label">Lekarz</span><span class="d-value">@visit.DoctorName</span></div>
+            <div class="detail-row"><span class="d-label">Data</span><span class="d-value">@visit.ScheduledAt.ToString("dd.MM.yyyy")</span></div>
+            <div class="detail-row"><span class="d-label">Godzina</span><span class="d-value">@visit.ScheduledAt.ToString("HH:mm")</span></div>
+            @if (!string.IsNullOrWhiteSpace(visit.Notes))
+            {
+                <div class="detail-row notes-row"><span class="d-label">Notatki</span><span class="d-value">@visit.Notes</span></div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="toast">@message</div>
+        }
+
+        @if (Editable)
+        {
+            @if (!rescheduling)
+            {
+                <div class="actions">
+                    <button class="btn-primary" @onclick="StartReschedule">Zmień termin</button>
+                    <button class="btn-danger" @onclick="CancelAsync" disabled="@busy">Odwołaj wizytę</button>
+                </div>
+            }
+            else
+            {
+                <div class="reschedule-box">
+                    <h3 class="box-title">Nowy termin</h3>
+                    <input type="date" class="glass-input" @bind="newDate" @bind:after="LoadSlotsAsync" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+
+                    @if (slotsLoading)
+                    {
+                        <LoadingSpinner />
+                    }
+                    else if (slots.Count == 0)
+                    {
+                        <p class="slots-empty">Lekarz nie przyjmuje w wybranym dniu.</p>
+                    }
+                    else
+                    {
+                        <div class="slots-grid">
+                            @foreach (var slot in slots)
+                            {
+                                var sv = slot;
+                                <button class="slot @(newTime == sv.Time ? "slot-active" : "") @(!sv.Available ? "slot-taken" : "")"
+                                        disabled="@(!sv.Available)" @onclick="() => newTime = sv.Time">@sv.Time</button>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(error))
+                    {
+                        <div class="error-msg">@error</div>
+                    }
+
+                    <div class="step-nav">
+                        <button class="btn-back-step" @onclick="() => rescheduling = false">Anuluj</button>
+                        <button class="btn-primary" @onclick="SaveRescheduleAsync" disabled="@(busy || string.IsNullOrEmpty(newTime))">
+                            @(busy ? "Zapisywanie..." : "Zapisz termin")
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="readonly-note">Tej wizyty nie można już zmienić ani odwołać.</p>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private VisitDto? visit;
+    private bool loading = true;
+    private bool rescheduling;
+    private bool busy;
+    private bool slotsLoading;
+    private string? error;
+    private string? message;
+
+    private DateTime newDate = DateTime.Today;
+    private string newTime = "";
+    private List<SlotDto> slots = new();
+
+    private bool Editable => visit is not null
+        && visit.Status != VisitStatus.Odwolana
+        && visit.Status != VisitStatus.Zakonczona
+        && DateTime.SpecifyKind(visit.ScheduledAt, DateTimeKind.Utc) > DateTime.UtcNow;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        try { visit = await VisitApi.GetVisitAsync(Id); }
+        catch { visit = null; }
+        finally { loading = false; }
+    }
+
+    private async Task StartReschedule()
+    {
+        error = null;
+        message = null;
+        newDate = visit!.ScheduledAt.Date;
+        newTime = "";
+        rescheduling = true;
+        await LoadSlotsAsync();
+    }
+
+    private async Task LoadSlotsAsync()
+    {
+        newTime = "";
+        slotsLoading = true;
+        try { slots = await VisitApi.GetSlotsAsync(visit!.DoctorId, DateOnly.FromDateTime(newDate)); }
+        catch { slots = new(); }
+        finally { slotsLoading = false; }
+    }
+
+    private async Task SaveRescheduleAsync()
+    {
+        error = null;
+        busy = true;
+        try
+        {
+            var parts = newTime.Split(':');
+            var wallClock = newDate.Date.AddHours(int.Parse(parts[0])).AddMinutes(int.Parse(parts[1]));
+            var scheduledAt = DateTime.SpecifyKind(wallClock, DateTimeKind.Utc);
+
+            var updated = await VisitApi.RescheduleVisitAsync(Id, scheduledAt);
+            if (updated is null)
+            {
+                error = Api.LastError ?? "Nie udało się zmienić terminu.";
+                return;
+            }
+            visit = updated;
+            rescheduling = false;
+            message = "Termin został zmieniony.";
+        }
+        catch { error = "Błąd połączenia. Spróbuj ponownie."; }
+        finally { busy = false; }
+    }
+
+    private async Task CancelAsync()
+    {
+        error = null;
+        busy = true;
+        try
+        {
+            var updated = await VisitApi.CancelVisitAsync(Id);
+            if (updated is null)
+            {
+                message = Api.LastError ?? "Nie udało się odwołać wizyty.";
+                return;
+            }
+            visit = updated;
+            message = "Wizyta została odwołana.";
+        }
+        catch { message = "Błąd połączenia. Spróbuj ponownie."; }
+        finally { busy = false; }
+    }
+
+    private static string VisitColor(VisitType t) => t switch
+    {
+        VisitType.Szczepienie => "#F5C842",
+        VisitType.Zabieg      => "#F06292",
+        VisitType.Diagnostyka => "#64B5F6",
+        VisitType.Nagly       => "#EF5350",
+        _                     => "#E8906A"
+    };
+
+    private static string VisitLabel(VisitType t) => t switch
+    {
+        VisitType.Szczepienie => "Szczepienie",
+        VisitType.Kontrola    => "Kontrola",
+        VisitType.Zabieg      => "Zabieg",
+        VisitType.Nagly       => "Nagły",
+        VisitType.Diagnostyka => "Diagnostyka",
+        _                     => t.ToString()
+    };
+
+    private static string StatusLabel(VisitStatus s) => s switch
+    {
+        VisitStatus.Oczekujaca   => "Oczekująca",
+        VisitStatus.Zaplanowana  => "Zaplanowana",
+        VisitStatus.Potwierdzona => "Potwierdzona",
+        VisitStatus.Zakonczona   => "Zakończona",
+        VisitStatus.Odwolana     => "Odwołana",
+        _                        => s.ToString()
+    };
+
+    private static string StatusClass(VisitStatus s) => s switch
+    {
+        VisitStatus.Zakonczona   => "badge-done",
+        VisitStatus.Odwolana     => "badge-cancelled",
+        VisitStatus.Potwierdzona => "badge-confirmed",
+        _                        => "badge-planned"
+    };
+}
+
+<style>
+    .detail-page { padding: 20px 16px 32px; }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+        padding-top: 8px;
+    }
+
+    .back-btn {
+        width: 40px;
+        height: 40px;
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 12px;
+        color: #F5EDE5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .page-title { font-size: 20px; font-weight: 800; color: #F5EDE5; }
+
+    .detail-card {
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 20px;
+        padding: 6px 0;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        margin-bottom: 18px;
+    }
+
+    .detail-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid rgba(245,237,229,0.06);
+    }
+
+    .hero-type { font-size: 18px; font-weight: 800; }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 13px 18px;
+        border-bottom: 1px solid rgba(245,237,229,0.05);
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+    .notes-row .d-value { text-align: right; }
+
+    .d-label { font-size: 13px; color: rgba(245,237,229,0.45); }
+    .d-value { font-size: 14px; font-weight: 600; color: #F5EDE5; }
+
+    .status-badge {
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 8px;
+        padding: 3px 9px;
+    }
+
+    .badge-planned   { background: rgba(232,144,106,0.12); color: #E8906A; }
+    .badge-confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
+    .badge-done      { background: rgba(245,237,229,0.08); color: rgba(245,237,229,0.5); }
+    .badge-cancelled { background: rgba(239,83,80,0.12);  color: #EF5350; }
+
+    .actions { display: flex; flex-direction: column; gap: 10px; }
+
+    .btn-primary {
+        background: #E8906A;
+        color: #2A1808;
+        border: none;
+        border-radius: 14px;
+        padding: 14px;
+        font-weight: 800;
+        font-size: 14px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        flex: 1;
+        cursor: pointer;
+    }
+
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-danger {
+        background: rgba(239,83,80,0.12);
+        color: #EF5350;
+        border: 1px solid rgba(239,83,80,0.3);
+        border-radius: 14px;
+        padding: 14px;
+        font-weight: 700;
+        font-size: 14px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        cursor: pointer;
+    }
+
+    .btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .reschedule-box {
+        background: #352010;
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 20px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .box-title { font-size: 15px; font-weight: 700; color: #F5EDE5; margin: 0; }
+
+    .glass-input {
+        width: 100%;
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        color: #F5EDE5;
+        border-radius: 14px;
+        padding: 13px 15px;
+        font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        outline: none;
+    }
+
+    .slots-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .slot {
+        background: rgba(245,237,229,0.06);
+        border: 1px solid rgba(232,144,106,0.2);
+        border-radius: 12px;
+        padding: 9px 16px;
+        color: rgba(245,237,229,0.75);
+        font-size: 13px;
+        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        cursor: pointer;
+    }
+
+    .slot-active { background: rgba(232,144,106,0.2); border-color: #E8906A; color: #E8906A; }
+    .slot-taken { opacity: 0.4; text-decoration: line-through; cursor: not-allowed; }
+
+    .slots-empty { font-size: 13px; color: rgba(245,237,229,0.5); }
+
+    .step-nav { display: flex; gap: 10px; margin-top: 4px; }
+
+    .btn-back-step {
+        background: rgba(245,237,229,0.07);
+        border: 1px solid rgba(232,144,106,0.2);
+        color: rgba(245,237,229,0.6);
+        border-radius: 14px;
+        padding: 13px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .error-msg {
+        background: rgba(239,83,80,0.1);
+        border: 1px solid rgba(239,83,80,0.3);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #EF5350;
+    }
+
+    .toast {
+        background: rgba(111,207,176,0.12);
+        border: 1px solid rgba(111,207,176,0.3);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #6FCFB0;
+        margin-bottom: 14px;
+    }
+
+    .readonly-note {
+        font-size: 13px;
+        color: rgba(245,237,229,0.45);
+        text-align: center;
+        padding: 12px;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 64px 20px;
+        color: rgba(245,237,229,0.4);
+        text-align: center;
+    }
+
+    .empty-icon { font-size: 40px; }
+</style>

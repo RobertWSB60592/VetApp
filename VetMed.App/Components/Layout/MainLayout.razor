@@ -23,9 +23,11 @@
     {
         if (firstRender && !AppState.IsAuthenticated)
         {
-            await AppState.TryRestoreAsync();
+            var restored = await AppState.TryRestoreAsync();
             if (!AppState.IsAuthenticated)
                 Nav.NavigateTo("/login", replace: true);
+            else if (restored)
+                StateHasChanged();
         }
     }
 
@@ -43,22 +45,14 @@
 }
 
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body, html {
-        background: #0D1F1C;
-        color: #E8F5F2;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        height: 100%;
-    }
-
     .app-shell {
         display: flex;
         flex-direction: column;
-        height: 100vh;
-        background: #0D1F1C;
+        height: 100dvh;
+        background: var(--bg);
+    box-shadow: inset -1px 0 0 rgba(60,184,122,0.06);
+        width: 100%;
         max-width: 430px;
-        margin: 0 auto;
         position: relative;
         overflow: hidden;
     }
@@ -67,7 +61,7 @@
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        padding-bottom: 84px;
+        padding-bottom: 90px;
         scrollbar-width: none;
     }
 

@@ -40,10 +40,68 @@ public sealed class VisitsController : ControllerBase
         return Ok(visits);
     }
 
+    [HttpGet("slots")]
+    [ProducesResponseType(typeof(IReadOnlyList<SlotDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetSlots([FromQuery] int doctorId, [FromQuery] DateOnly date, CancellationToken ct)
+    {
+        var slots = await _visits.GetAvailableSlotsAsync(doctorId, date, ct);
+        return Ok(slots);
+    }
+
+    [HttpGet("availability")]
+    [ProducesResponseType(typeof(IReadOnlyList<DayAvailabilityDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAvailability([FromQuery] int doctorId, [FromQuery] DateOnly from, [FromQuery] int days, CancellationToken ct)
+    {
+        var availability = await _visits.GetAvailabilityAsync(doctorId, from, days, ct);
+        return Ok(availability);
+    }
+
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(VisitDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById(int id, CancellationToken ct)
+    {
+        var visit = await _visits.GetByIdAsync(id, OwnerId, ct);
+        return visit is null ? NotFound() : Ok(visit);
+    }
+
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType(typeof(VisitDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Reschedule(int id, [FromBody] RescheduleVisitDto dto, CancellationToken ct)
+    {
+        var result = await _visits.RescheduleAsync(OwnerId, id, dto, ct);
+        return MapMutation(result);
+    }
+
+    [HttpPost("{id:int}/cancel")]
+    [ProducesResponseType(typeof(VisitDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> Cancel(int id, CancellationToken ct)
+    {
+        var result = await _visits.CancelAsync(OwnerId, id, ct);
+        return MapMutation(result);
+    }
+
+    private IActionResult MapMutation(VisitMutationResult result) => result.Outcome switch
+    {
+        VisitMutationOutcome.Ok => Ok(result.Visit),
+        VisitMutationOutcome.NotEditable => Problem(
+            statusCode: StatusCodes.Status409Conflict,
+            title: "Wizyty nie można już zmienić ani odwołać."),
+        VisitMutationOutcome.SlotUnavailable => Problem(
+            statusCode: StatusCodes.Status409Conflict,
+            title: "Wybrany termin jest już zajęty lub poza grafikiem lekarza."),
+        _ => NotFound()
+    };
+
     [HttpPost]
     [ProducesResponseType(typeof(VisitDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> Create([FromBody] CreateVisitDto dto, CancellationToken ct)
     {
         var validation = await _createValidator.ValidateAsync(dto, ct);
@@ -54,14 +112,16 @@ public sealed class VisitsController : ControllerBase
             return ValidationProblem();
         }
 
-        var created = await _visits.CreateAsync(OwnerId, dto, ct);
-        if (created is null)
+        var result = await _visits.CreateAsync(OwnerId, dto, ct);
+        return result.Outcome switch
         {
-            return Problem(
+            BookingOutcome.Created => CreatedAtAction(nameof(GetAll), result.Visit),
+            BookingOutcome.SlotUnavailable => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Wybrany termin jest już zajęty lub poza grafikiem lekarza."),
+            _ => Problem(
                 statusCode: StatusCodes.Status404NotFound,
-                title: "Pet or doctor not found, or pet does not belong to the authenticated owner.");
-        }
-
-        return CreatedAtAction(nameof(GetAll), created);
+                title: "Pet or doctor not found, or pet does not belong to the authenticated owner.")
+        };
     }
 }

@@ -47,7 +47,7 @@ try
 
     app.MapControllers();
 
-    app.Run("http://localhost:5100");
+    app.Run("http://0.0.0.0:5100");
 }
 catch (Exception ex) when (ex is not HostAbortedException)
 {

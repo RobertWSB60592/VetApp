@@ -22,8 +22,14 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        builder.Services.AddHttpClient<ApiClient>(c =>
-            c.BaseAddress = new Uri("http://localhost:5100/"));
+#if ANDROID
+        var apiBase = "http://192.168.1.11:5100/";
+#else
+        var apiBase = "http://127.0.0.1:5100/";
+#endif
+
+        builder.Services.AddSingleton<ApiClient>(_ =>
+            new ApiClient(new HttpClient { BaseAddress = new Uri(apiBase) }));
 
         builder.Services.AddSingleton<AppState>();
         builder.Services.AddTransient<IAuthApiService, AuthApiService>();
@@ -31,6 +37,11 @@ public static class MauiProgram
         builder.Services.AddTransient<IVisitApiService, VisitApiService>();
         builder.Services.AddTransient<IDoctorApiService, DoctorApiService>();
 
-        return builder.Build();
+        var app = builder.Build();
+        var appState = app.Services.GetRequiredService<AppState>();
+        var apiClient = app.Services.GetRequiredService<ApiClient>();
+        appState.SetApiClient(apiClient);
+
+        return app;
     }
 }

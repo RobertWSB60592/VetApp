@@ -5,10 +5,10 @@
 @inject NavigationManager Nav
 
 <div class="home-page">
-    <div class="header">
+    <div class="home-header">
         <div>
-            <h1 class="greeting">Cześć, @FirstName! 👋</h1>
-            <p class="sub">Co słychać u twoich pupili?</p>
+            <h1 class="greeting">Cześć, @FirstName!</h1>
+            <p class="greeting-sub">Co słychać u twoich pupili?</p>
         </div>
         <div class="avatar">@FirstName.Substring(0, 1)</div>
     </div>
@@ -28,11 +28,11 @@
                 @foreach (var pet in pets)
                 {
                     var petId = pet.Id;
-                    <PetCard Pet="pet" OnClick="EventCallback.Factory.Create(this, () => Nav.NavigateTo(PetRoute(petId)))" @key="pet.Id" />
+                    <PetCard Pet="pet" OnClick="() => Nav.NavigateTo(PetRoute(petId))" @key="pet.Id" />
                 }
-                <div class="add-card" @onclick='() => Nav.NavigateTo("/pets/add")'>
-                    <span class="add-icon">+</span>
-                    <span class="add-label">Dodaj</span>
+                <div class="add-pet-card" @onclick='() => Nav.NavigateTo("/pets/add")'>
+                    <span class="add-pet-plus">+</span>
+                    <span class="add-pet-label">Dodaj</span>
                 </div>
             </div>
         </section>
@@ -40,14 +40,14 @@
         <section class="section">
             <div class="section-header">
                 <span class="section-title">Nadchodzące wizyty</span>
-                <button class="btn-new" @onclick='() => Nav.NavigateTo("/book-visit")'>+ Nowa wizyta</button>
+                <button class="btn-new-visit" @onclick='() => Nav.NavigateTo("/book-visit")'>+ Nowa wizyta</button>
             </div>
 
             @if (upcomingVisits.Count == 0)
             {
                 <div class="empty-card">
-                    <span class="empty-icon">📅</span>
-                    <span>Brak zaplanowanych wizyt</span>
+                    <span class="empty-icon">&#x1F4C5;</span>
+                    <span class="empty-text">Brak zaplanowanych wizyt</span>
                     <button class="btn-primary-sm" @onclick='() => Nav.NavigateTo("/book-visit")'>Umów wizytę</button>
                 </div>
             }
@@ -72,19 +72,22 @@
                 <span class="section-title">Ostatnie wizyty</span>
                 <a href="/history" class="see-all">Historia</a>
             </div>
-            @foreach (var v in recentVisits)
-            {
-                <div class="visit-card" @key="v.Id">
-                    <div class="visit-dot" style="background:@VisitColor(v.Type)"></div>
-                    <div class="visit-info">
-                        <div class="visit-title">@v.PetName — @VisitLabel(v.Type)</div>
-                        <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy") · @v.DoctorName</div>
-                    </div>
-                </div>
-            }
             @if (recentVisits.Count == 0)
             {
                 <p class="muted-text">Brak historii wizyt.</p>
+            }
+            else
+            {
+                @foreach (var v in recentVisits)
+                {
+                    <div class="visit-card" @key="v.Id">
+                        <div class="visit-dot" style="background:@VisitColor(v.Type)"></div>
+                        <div class="visit-info">
+                            <div class="visit-title">@v.PetName — @VisitLabel(v.Type)</div>
+                            <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy") · @v.DoctorName</div>
+                        </div>
+                    </div>
+                }
             }
         </section>
     }
@@ -137,7 +140,7 @@
         VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
         VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
         VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#6FCFB0"
+        _                                          => "#3CB87A"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -168,7 +171,7 @@
         gap: 24px;
     }
 
-    .header {
+    .home-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -176,33 +179,31 @@
     }
 
     .greeting {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 800;
-        color: #E8F5F2;
+        color: #1A2C22;
     }
 
-    .sub {
+    .greeting-sub {
         font-size: 13px;
-        color: rgba(232,245,242,0.6);
-        margin-top: 2px;
+        color: rgba(26,44,34,0.45);
+        margin-top: 3px;
     }
 
     .avatar {
-        width: 44px;
-        height: 44px;
+        width: 46px;
+        height: 46px;
         border-radius: 50%;
-        background: rgba(111,207,176,0.2);
-        border: 1px solid rgba(111,207,176,0.4);
+        background: rgba(60,184,122,0.2);
+        border: 2px solid rgba(60,184,122,0.4);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 18px;
         font-weight: 700;
-        color: #6FCFB0;
+        color: #3CB87A;
         flex-shrink: 0;
     }
-
-    .section {}
 
     .section-header {
         display: flex;
@@ -214,24 +215,25 @@
     .section-title {
         font-size: 16px;
         font-weight: 700;
-        color: #E8F5F2;
+        color: #1A2C22;
     }
 
     .see-all {
         font-size: 13px;
-        color: #6FCFB0;
+        color: #3CB87A;
         text-decoration: none;
         font-weight: 600;
     }
 
-    .btn-new {
-        background: rgba(111,207,176,0.15);
-        border: 1px solid rgba(111,207,176,0.3);
-        color: #6FCFB0;
+    .btn-new-visit {
+        background: rgba(60,184,122,0.15);
+        border: 1px solid rgba(60,184,122,0.3);
+        color: #3CB87A;
         border-radius: 10px;
         padding: 6px 12px;
         font-size: 13px;
         font-weight: 600;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
     }
 
@@ -245,44 +247,44 @@
 
     .pets-scroll::-webkit-scrollbar { display: none; }
 
-    .add-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px dashed rgba(111,207,176,0.3);
-        border-radius: 16px;
-        padding: 16px;
+    .add-pet-card {
+        background: rgba(26,44,34,0.04);
+        border: 1px dashed rgba(60,184,122,0.3);
+        border-radius: 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 6px;
         cursor: pointer;
-        min-width: 90px;
-        min-height: 110px;
+        min-width: 100px;
+        min-height: 158px;
         flex-shrink: 0;
         transition: border-color 0.2s;
     }
 
-    .add-card:active { transform: scale(0.97); }
+    .add-pet-card:active { transform: scale(0.97); }
 
-    .add-icon {
+    .add-pet-plus {
         font-size: 28px;
-        color: rgba(111,207,176,0.6);
+        color: rgba(60,184,122,0.6);
     }
 
-    .add-label {
+    .add-pet-label {
         font-size: 12px;
-        color: rgba(232,245,242,0.5);
+        color: rgba(26,44,34,0.4);
     }
 
     .visit-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(111,207,176,0.15);
-        border-radius: 14px;
+        background: #FFFFFF;
+        border: 1px solid rgba(60,184,122,0.2);
+        border-radius: 16px;
         padding: 14px 16px;
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 8px;
+        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
     }
 
     .visit-dot {
@@ -290,6 +292,7 @@
         height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
+        box-shadow: 0 0 8px currentColor;
     }
 
     .visit-info { flex: 1; }
@@ -297,55 +300,61 @@
     .visit-title {
         font-size: 14px;
         font-weight: 600;
-        color: #E8F5F2;
+        color: #1A2C22;
     }
 
     .visit-meta {
         font-size: 12px;
-        color: rgba(232,245,242,0.55);
+        color: rgba(26,44,34,0.45);
         margin-top: 2px;
     }
 
     .visit-badge {
         font-size: 11px;
         font-weight: 600;
-        color: #6FCFB0;
-        background: rgba(111,207,176,0.12);
+        color: #3CB87A;
+        background: rgba(60,184,122,0.12);
         border-radius: 8px;
         padding: 3px 8px;
         white-space: nowrap;
     }
 
     .empty-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px dashed rgba(111,207,176,0.2);
-        border-radius: 16px;
+        background: rgba(26,44,34,0.03);
+        border: 1px dashed rgba(60,184,122,0.2);
+        border-radius: 20px;
         padding: 28px 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 10px;
-        color: rgba(232,245,242,0.5);
+        color: rgba(26,44,34,0.45);
         font-size: 14px;
+        text-align: center;
     }
 
     .empty-icon { font-size: 32px; }
+    .empty-text { font-size: 14px; }
 
     .btn-primary-sm {
-        background: #6FCFB0;
-        color: #0D1F1C;
+        background: #3CB87A;
+        color: #F8FCF9;
         border: none;
-        border-radius: 10px;
-        padding: 10px 20px;
+        border-radius: 12px;
+        padding: 10px 22px;
         font-weight: 700;
         font-size: 13px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
         margin-top: 4px;
+        transition: opacity 0.2s;
     }
+
+    .btn-primary-sm:active { opacity: 0.85; }
 
     .muted-text {
         font-size: 13px;
-        color: rgba(232,245,242,0.45);
+        color: rgba(26,44,34,0.35);
         text-align: center;
         padding: 16px 0;
     }

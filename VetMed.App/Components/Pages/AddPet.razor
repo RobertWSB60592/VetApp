@@ -1,17 +1,30 @@
 @page "/pets/add"
 @inject IPetApiService PetApi
+@inject ApiClient Api
 @inject NavigationManager Nav
 
 <div class="add-pet-page">
     <div class="page-header">
-        <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>&#8592;</button>
-        <h1 class="page-title">Dodaj zwierzaka</h1>
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <div>
+            <div class="page-title">Dodaj zwierzaka</div>
+            <div class="page-sub">Uzupełnij profil pupila</div>
+        </div>
     </div>
 
     @if (success)
     {
         <div class="success-screen">
-            <div class="success-emoji">✅</div>
+            <div class="success-rings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+                <div class="success-icon">&#x2713;</div>
+            </div>
             <h2 class="success-title">Dodano @addedName!</h2>
             <p class="success-sub">Profil zwierzaka jest gotowy</p>
             <button class="btn-primary" @onclick="GoToProfile">Przejdź do profilu</button>
@@ -21,17 +34,17 @@
     {
         <div class="form-wrap">
             <div class="field">
-                <label>Imię <span class="required">*</span></label>
-                <input type="text" @bind="name" placeholder="np. Ozzy" />
+                <label class="field-label">Imię <span class="required">*</span></label>
+                <input type="text" class="glass-input" @bind="name" placeholder="np. Ozzy" />
             </div>
 
             <div class="field">
-                <label>Gatunek <span class="required">*</span></label>
+                <label class="field-label">Gatunek <span class="required">*</span></label>
                 <div class="chips">
                     @foreach (var s in Enum.GetValues<VetMed.Shared.Enums.Species>())
                     {
                         var sv = s;
-                        <button class="chip @(species == sv ? "active" : "")" @onclick="() => species = sv" @key="sv">
+                        <button class="chip @(species == sv ? "chip-active" : "")" @onclick="() => species = sv" @key="sv">
                             @SpeciesEmoji(sv) @SpeciesLabel(sv)
                         </button>
                     }
@@ -39,18 +52,18 @@
             </div>
 
             <div class="field">
-                <label>Rasa</label>
-                <input type="text" @bind="breed" placeholder="np. Labrador" />
+                <label class="field-label">Rasa</label>
+                <input type="text" class="glass-input" @bind="breed" placeholder="np. Labrador" />
             </div>
 
             <div class="field">
-                <label>Waga (kg)</label>
-                <input type="number" @bind="weight" placeholder="np. 4.5" min="0" max="200" step="0.1" />
+                <label class="field-label">Waga (kg)</label>
+                <input type="number" class="glass-input" @bind="weight" placeholder="np. 4.5" min="0" max="200" step="0.1" />
             </div>
 
             <div class="field">
-                <label>Data urodzin <span class="required">*</span></label>
-                <input type="date" @bind="born" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <label class="field-label">Data urodzin <span class="required">*</span></label>
+                <input type="date" class="glass-input" @bind="born" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
             </div>
 
             @if (!string.IsNullOrEmpty(error))
@@ -59,14 +72,7 @@
             }
 
             <button class="btn-primary" @onclick="SubmitAsync" disabled="@(loading || string.IsNullOrWhiteSpace(name))">
-                @if (loading)
-                {
-                    <span>Dodawanie...</span>
-                }
-                else
-                {
-                    <span>Dodaj zwierzaka</span>
-                }
+                @(loading ? "Dodawanie..." : "Dodaj zwierzaka")
             </button>
         </div>
     }
@@ -112,7 +118,7 @@
             var result = await PetApi.CreatePetAsync(dto);
             if (result is null)
             {
-                error = "Nie udało się dodać zwierzaka. Spróbuj ponownie.";
+                error = Api.LastError ?? "Nie udało się dodać zwierzaka. Spróbuj ponownie.";
                 return;
             }
             addedName = result.Name;
@@ -152,7 +158,7 @@
 
 <style>
     .add-pet-page {
-        padding: 20px 16px;
+        padding: 20px 16px 32px;
         display: flex;
         flex-direction: column;
         gap: 0;
@@ -161,30 +167,38 @@
     .page-header {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 24px;
+        gap: 14px;
+        margin-bottom: 28px;
         padding-top: 8px;
     }
 
     .back-btn {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 10px;
-        color: #E8F5F2;
-        font-size: 18px;
-        width: 36px;
-        height: 36px;
-        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        background: rgba(26,44,34,0.07);
+        border: 1px solid rgba(60,184,122,0.2);
+        border-radius: 12px;
+        color: #1A2C22;
         display: flex;
         align-items: center;
         justify-content: center;
+        cursor: pointer;
         flex-shrink: 0;
+        transition: background 0.2s;
     }
 
+    .back-btn:hover { background: rgba(60,184,122,0.1); }
+
     .page-title {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 800;
-        color: #E8F5F2;
+        color: #1A2C22;
+    }
+
+    .page-sub {
+        font-size: 12px;
+        color: rgba(26,44,34,0.45);
+        margin-top: 2px;
     }
 
     .form-wrap {
@@ -199,27 +213,29 @@
         gap: 8px;
     }
 
-    .field label {
+    .field-label {
         font-size: 13px;
         font-weight: 600;
-        color: rgba(232,245,242,0.7);
+        color: rgba(26,44,34,0.6);
     }
 
-    .required { color: #EF5350; }
+    .required { color: var(--danger); }
 
-    .field input {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: #E8F5F2;
-        border-radius: 12px;
-        padding: 12px 16px;
+    .glass-input {
+        width: 100%;
+        background: rgba(26,44,34,0.07);
+        border: 1px solid rgba(60,184,122,0.2);
+        color: #1A2C22;
+        border-radius: 14px;
+        padding: 14px 16px;
         font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         outline: none;
         transition: border-color 0.2s;
     }
 
-    .field input:focus { border-color: rgba(111,207,176,0.6); }
-    .field input::placeholder { color: rgba(232,245,242,0.3); }
+    .glass-input:focus { border-color: rgba(60,184,122,0.6); }
+    .glass-input::placeholder { color: rgba(26,44,34,0.25); }
 
     .chips {
         display: flex;
@@ -228,47 +244,49 @@
     }
 
     .chip {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: rgba(232,245,242,0.7);
+        background: rgba(26,44,34,0.06);
+        border: 1px solid rgba(60,184,122,0.2);
+        color: rgba(26,44,34,0.6);
         border-radius: 20px;
-        padding: 8px 14px;
+        padding: 9px 16px;
         font-size: 13px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
         transition: background 0.2s, border-color 0.2s, color 0.2s;
     }
 
-    .chip.active {
-        background: rgba(111,207,176,0.2);
-        border-color: #6FCFB0;
-        color: #6FCFB0;
+    .chip-active {
+        background: rgba(60,184,122,0.18);
+        border-color: #3CB87A;
+        color: #3CB87A;
         font-weight: 700;
     }
 
     .error-msg {
-        background: rgba(255,80,80,0.12);
-        border: 1px solid rgba(255,80,80,0.3);
-        border-radius: 10px;
-        padding: 10px 14px;
+        background: rgba(255,112,112,0.1);
+        border: 1px solid rgba(255,112,112,0.3);
+        border-radius: 12px;
+        padding: 12px 14px;
         font-size: 13px;
-        color: #ff8080;
+        color: #FF7070;
     }
 
     .btn-primary {
-        background: #6FCFB0;
-        color: #0D1F1C;
+        background: #3CB87A;
+        color: #F8FCF9;
         border: none;
-        border-radius: 12px;
-        padding: 14px;
-        font-weight: 700;
+        border-radius: 16px;
+        padding: 15px;
+        font-weight: 800;
         font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         width: 100%;
         cursor: pointer;
         transition: opacity 0.2s, transform 0.15s;
         margin-top: 4px;
     }
 
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-primary:active:not(:disabled) { transform: scale(0.98); }
 
     .success-screen {
@@ -277,21 +295,59 @@
         align-items: center;
         justify-content: center;
         padding: 60px 20px;
-        gap: 12px;
+        gap: 16px;
         text-align: center;
+        flex: 1;
     }
 
-    .success-emoji { font-size: 56px; line-height: 1; }
+    .success-rings {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+    }
+
+    .ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 2px solid rgba(60,184,122,0.3);
+        animation: pulse-ring 2s ease-out infinite;
+    }
+
+    .ring-1 { width: 120px; height: 120px; animation-delay: 0s; }
+    .ring-2 { width: 90px; height: 90px; animation-delay: 0.4s; }
+    .ring-3 { width: 60px; height: 60px; animation-delay: 0.8s; }
+
+    @@keyframes pulse-ring {
+        0%   { transform: scale(0.9); opacity: 0.8; }
+        100% { transform: scale(1.1); opacity: 0; }
+    }
+
+    .success-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #3CB87A;
+        color: #F8FCF9;
+        font-size: 26px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
 
     .success-title {
-        font-size: 22px;
+        font-size: 24px;
         font-weight: 800;
-        color: #E8F5F2;
+        color: #1A2C22;
     }
 
     .success-sub {
         font-size: 14px;
-        color: rgba(232,245,242,0.6);
-        margin-bottom: 8px;
+        color: rgba(26,44,34,0.45);
     }
 </style>
