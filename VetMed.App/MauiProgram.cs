@@ -22,8 +22,15 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
+#if DEBUG
+        // Android emulator: 10.0.2.2 → localhost hosta; fizyczny telefon: IP komputera
+        const string ApiBase = "http://10.0.2.2:5100/";
+#else
+        // Produkcja: URL Cloud Run (uzupełnij po pierwszym deployu)
+        const string ApiBase = "https://CLOUD_RUN_URL.run.app/";
+#endif
         builder.Services.AddHttpClient<ApiClient>(c =>
-            c.BaseAddress = new Uri("http://localhost:5100/"));
+            c.BaseAddress = new Uri(ApiBase));
 
         builder.Services.AddSingleton<AppState>();
         builder.Services.AddTransient<IAuthApiService, AuthApiService>();
