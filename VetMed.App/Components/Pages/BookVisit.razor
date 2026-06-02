@@ -216,7 +216,10 @@
         try
         {
             var timeParts = selectedTime.Split(':');
-            var scheduledAt = selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
+            var localDt = DateTime.SpecifyKind(
+                selectedDate.Date.AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1])),
+                DateTimeKind.Local);
+            var scheduledAt = localDt.ToUniversalTime();
 
             var dto = new CreateVisitDto(scheduledAt, selectedType, selectedPetId, selectedDoctorId!.Value, notes);
             var result = await VisitApi.CreateVisitAsync(dto);

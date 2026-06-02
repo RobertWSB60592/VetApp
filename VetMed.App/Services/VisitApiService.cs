@@ -15,7 +15,7 @@ public class VisitApiService : IVisitApiService
         await _api.GetAsync<List<VisitDto>>("api/visits") ?? [];
 
     public async Task<List<VisitDto>> GetVisitsByPetAsync(int petId) =>
-        await _api.GetAsync<List<VisitDto>>($"api/visits?petId={petId}") ?? [];
+        await _api.GetAsync<List<VisitDto>>($"api/visits/pet/{petId}") ?? [];
 
     public Task<VisitDto?> CreateVisitAsync(CreateVisitDto dto) =>
         _api.PostAsync<VisitDto>("api/visits", dto);
