@@ -8,7 +8,7 @@ public sealed class CreateVisitValidator : AbstractValidator<CreateVisitDto>
     public CreateVisitValidator()
     {
         RuleFor(x => x.ScheduledAt)
-            .GreaterThan(DateTime.UtcNow)
+            .Must(d => d.ToUniversalTime().Date >= DateTime.UtcNow.Date)
             .WithMessage("Scheduled date must be in the future.");
         RuleFor(x => x.PetId).GreaterThan(0);
         RuleFor(x => x.DoctorId).GreaterThan(0);

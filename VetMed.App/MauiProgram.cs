@@ -23,14 +23,14 @@ public static class MauiProgram
 #endif
 
 #if DEBUG
-        // Android emulator: 10.0.2.2 → localhost hosta; fizyczny telefon: IP komputera
+        // Android emulator: 10.0.2.2 → localhost hosta; fizyczny telefon: IP komputera w sieci
         const string ApiBase = "http://10.0.2.2:5100/";
 #else
-        // Produkcja: URL Cloud Run (uzupełnij po pierwszym deployu)
         const string ApiBase = "https://vetmed-api-466028938317.europe-central2.run.app/";
 #endif
-        builder.Services.AddHttpClient<ApiClient>(c =>
-            c.BaseAddress = new Uri(ApiBase));
+
+        builder.Services.AddSingleton<ApiClient>(_ =>
+            new ApiClient(new HttpClient { BaseAddress = new Uri(ApiBase) }));
 
         builder.Services.AddSingleton<AppState>();
         builder.Services.AddTransient<IAuthApiService, AuthApiService>();
@@ -38,6 +38,11 @@ public static class MauiProgram
         builder.Services.AddTransient<IVisitApiService, VisitApiService>();
         builder.Services.AddTransient<IDoctorApiService, DoctorApiService>();
 
-        return builder.Build();
+        var app = builder.Build();
+        var appState = app.Services.GetRequiredService<AppState>();
+        var apiClient = app.Services.GetRequiredService<ApiClient>();
+        appState.SetApiClient(apiClient);
+
+        return app;
     }
 }

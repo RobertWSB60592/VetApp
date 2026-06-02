@@ -17,7 +17,7 @@ public class PetConfiguration : IEntityTypeConfiguration<Pet>
 
         builder.Property(p => p.Species)
             .IsRequired()
-            .HasConversion<string>();
+            .HasMaxLength(60);
 
         builder.Property(p => p.Breed)
             .HasMaxLength(100);
@@ -29,7 +29,27 @@ public class PetConfiguration : IEntityTypeConfiguration<Pet>
             .IsRequired();
 
         builder.Property(p => p.ImageUrl)
-            .HasMaxLength(500);
+            .HasColumnType("text");
+
+        builder.Property(p => p.Sex)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(p => p.Sterilized)
+            .IsRequired();
+
+        builder.Property(p => p.MicrochipNumber)
+            .HasMaxLength(40);
+
+        builder.Property(p => p.Color)
+            .HasMaxLength(60);
+
+        builder.Property(p => p.Notes)
+            .HasMaxLength(1000);
+
+        builder.Property(p => p.IsArchived)
+            .IsRequired();
 
         builder.HasOne(p => p.Owner)
             .WithMany(o => o.Pets)

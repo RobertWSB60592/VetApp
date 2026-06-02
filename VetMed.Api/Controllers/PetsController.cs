@@ -14,11 +14,13 @@ public sealed class PetsController : ControllerBase
 {
     private readonly IPetService _pets;
     private readonly IValidator<CreatePetDto> _createValidator;
+    private readonly IValidator<UpdatePetDto> _updateValidator;
 
-    public PetsController(IPetService pets, IValidator<CreatePetDto> createValidator)
+    public PetsController(IPetService pets, IValidator<CreatePetDto> createValidator, IValidator<UpdatePetDto> updateValidator)
     {
         _pets = pets;
         _createValidator = createValidator;
+        _updateValidator = updateValidator;
     }
 
     private int OwnerId => int.Parse(User.FindFirstValue("sub")!);
@@ -61,9 +63,18 @@ public sealed class PetsController : ControllerBase
 
     [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(PetDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdatePetDto dto, CancellationToken ct)
     {
+        var validation = await _updateValidator.ValidateAsync(dto, ct);
+        if (!validation.IsValid)
+        {
+            foreach (var error in validation.Errors)
+                ModelState.AddModelError(error.PropertyName, error.ErrorMessage);
+            return ValidationProblem();
+        }
+
         var updated = await _pets.UpdateAsync(id, OwnerId, dto, ct);
         if (updated is null)
             return Problem(statusCode: StatusCodes.Status404NotFound, title: "Pet not found.");

@@ -11,30 +11,41 @@
     else if (pet is null)
     {
         <div class="not-found">
-            <p>Nie znaleziono zwierzaka.</p>
-            <button class="btn-back" @onclick='() => Nav.NavigateTo("/pets")'>Wróć</button>
+            <p class="not-found-text">Nie znaleziono zwierzaka.</p>
+            <button class="btn-back-sm" @onclick='() => Nav.NavigateTo("/pets")'>Wróć</button>
         </div>
     }
     else
     {
         <div class="hero">
-            <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>&#8592;</button>
-            <div class="hero-emoji">@SpeciesEmoji(pet.Species)</div>
+            <button class="back-btn" @onclick='() => Nav.NavigateTo("/pets")'>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </button>
+            @if (!string.IsNullOrEmpty(pet.ImageUrl))
+            {
+                <img class="hero-photo" src="@pet.ImageUrl" alt="@pet.Name" />
+            }
+            else
+            {
+                <div class="hero-emoji">@PetVisuals.Emoji(pet.Species)</div>
+            }
             <h1 class="hero-name">@pet.Name</h1>
             <div class="hero-tags">
-                <span class="hero-tag">@SpeciesLabel(pet.Species)</span>
+                <span class="hero-tag">@pet.Species</span>
                 @if (!string.IsNullOrEmpty(pet.Breed))
                 {
                     <span class="hero-tag">@pet.Breed</span>
                 }
-                <span class="hero-tag mint">@PetAge(pet.Born)</span>
+                <span class="hero-tag hero-tag-mint">@PetAge(pet.Born)</span>
             </div>
         </div>
 
         <div class="tabs-bar">
-            <button class="tab @(activeTab == 0 ? "active" : "")" @onclick="() => activeTab = 0">Opis</button>
-            <button class="tab @(activeTab == 1 ? "active" : "")" @onclick="() => activeTab = 1">Wizyty</button>
-            <button class="tab @(activeTab == 2 ? "active" : "")" @onclick="() => activeTab = 2">Szczepienia</button>
+            <button class="tab @(activeTab == 0 ? "tab-active" : "")" @onclick="() => activeTab = 0">Opis</button>
+            <button class="tab @(activeTab == 1 ? "tab-active" : "")" @onclick="() => activeTab = 1">Wizyty</button>
+            <button class="tab @(activeTab == 2 ? "tab-active" : "")" @onclick="() => activeTab = 2">Szczepienia</button>
         </div>
 
         <div class="tab-content">
@@ -43,7 +54,18 @@
                 <div class="info-card">
                     <div class="info-row">
                         <span class="info-label">Gatunek</span>
-                        <span class="info-value">@SpeciesLabel(pet.Species)</span>
+                        <span class="info-value">@pet.Species</span>
+                    </div>
+                    @if (pet.Sex != VetMed.Shared.Enums.PetSex.Nieznana)
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Płeć</span>
+                            <span class="info-value">@SexLabel(pet.Sex)</span>
+                        </div>
+                    }
+                    <div class="info-row">
+                        <span class="info-label">Sterylizacja/kastracja</span>
+                        <span class="info-value">@(pet.Sterilized ? "Tak" : "Nie")</span>
                     </div>
                     @if (!string.IsNullOrEmpty(pet.Breed))
                     {
@@ -65,8 +87,29 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Wiek</span>
-                        <span class="info-value">@PetAge(pet.Born)</span>
+                        <span class="info-value info-value-mint">@PetAge(pet.Born)</span>
                     </div>
+                    @if (!string.IsNullOrEmpty(pet.Color))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Kolor</span>
+                            <span class="info-value">@pet.Color</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(pet.MicrochipNumber))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Mikrochip</span>
+                            <span class="info-value">@pet.MicrochipNumber</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(pet.Notes))
+                    {
+                        <div class="info-row">
+                            <span class="info-label">Uwagi</span>
+                            <span class="info-value">@pet.Notes</span>
+                        </div>
+                    }
                 </div>
             }
             else if (activeTab == 1)
@@ -154,22 +197,11 @@
         finally { visitsLoading = false; }
     }
 
-    private static string SpeciesEmoji(VetMed.Shared.Enums.Species s) => s switch
+    private static string SexLabel(VetMed.Shared.Enums.PetSex s) => s switch
     {
-        VetMed.Shared.Enums.Species.Kot    => "🐱",
-        VetMed.Shared.Enums.Species.Pies   => "🐶",
-        VetMed.Shared.Enums.Species.Krolik => "🐰",
-        VetMed.Shared.Enums.Species.Ptak   => "🐦",
-        _                                  => "🐾"
-    };
-
-    private static string SpeciesLabel(VetMed.Shared.Enums.Species s) => s switch
-    {
-        VetMed.Shared.Enums.Species.Pies   => "Pies",
-        VetMed.Shared.Enums.Species.Kot    => "Kot",
-        VetMed.Shared.Enums.Species.Krolik => "Królik",
-        VetMed.Shared.Enums.Species.Ptak   => "Ptak",
-        _                                  => "Inne"
+        VetMed.Shared.Enums.PetSex.Samiec => "Samiec",
+        VetMed.Shared.Enums.PetSex.Samica => "Samica",
+        _                                 => "Nieznana"
     };
 
     private static string PetAge(DateOnly born)
@@ -188,7 +220,7 @@
         VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
         VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
         VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#6FCFB0"
+        _                                          => "#3CB87A"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -219,8 +251,8 @@
     }
 
     .hero {
-        background: linear-gradient(180deg, rgba(111,207,176,0.12) 0%, transparent 100%);
-        padding: 20px 20px 24px;
+        background: linear-gradient(180deg, rgba(60,184,122,0.12) 0%, transparent 100%);
+        padding: 20px 20px 28px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -231,26 +263,37 @@
         position: absolute;
         left: 16px;
         top: 20px;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 10px;
-        color: #E8F5F2;
-        font-size: 18px;
-        width: 36px;
-        height: 36px;
+        background: rgba(26,44,34,0.08);
+        border: 1px solid rgba(60,184,122,0.2);
+        border-radius: 12px;
+        color: #1A2C22;
+        width: 38px;
+        height: 38px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: background 0.2s;
     }
 
-    .hero-emoji { font-size: 64px; line-height: 1; margin-bottom: 12px; }
+    .back-btn:hover { background: rgba(60,184,122,0.1); }
+
+    .hero-emoji { font-size: 72px; line-height: 1; margin-bottom: 14px; }
+
+    .hero-photo {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 14px;
+        border: 3px solid rgba(60,184,122,0.3);
+    }
 
     .hero-name {
-        font-size: 26px;
+        font-size: 28px;
         font-weight: 800;
-        color: #E8F5F2;
-        margin-bottom: 10px;
+        color: #1A2C22;
+        margin-bottom: 12px;
     }
 
     .hero-tags {
@@ -261,44 +304,45 @@
     }
 
     .hero-tag {
-        background: rgba(255,255,255,0.1);
+        background: rgba(26,44,34,0.09);
         border-radius: 10px;
-        padding: 4px 12px;
+        padding: 5px 13px;
         font-size: 12px;
-        color: rgba(232,245,242,0.8);
+        color: rgba(26,44,34,0.75);
+        font-weight: 600;
     }
 
-    .hero-tag.mint {
-        background: rgba(111,207,176,0.15);
-        color: #6FCFB0;
+    .hero-tag-mint {
+        background: rgba(60,184,122,0.15);
+        color: #3CB87A;
     }
 
     .tabs-bar {
         display: flex;
-        gap: 0;
-        background: rgba(255,255,255,0.04);
+        background: rgba(26,44,34,0.04);
         margin: 0 16px;
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 4px;
-        border: 1px solid rgba(111,207,176,0.15);
+        border: 1px solid rgba(60,184,122,0.15);
     }
 
     .tab {
         flex: 1;
         background: transparent;
         border: none;
-        color: rgba(232,245,242,0.55);
+        color: rgba(26,44,34,0.45);
         font-size: 13px;
         font-weight: 600;
-        padding: 8px 4px;
-        border-radius: 9px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        padding: 9px 4px;
+        border-radius: 10px;
         cursor: pointer;
         transition: background 0.2s, color 0.2s;
     }
 
-    .tab.active {
-        background: rgba(111,207,176,0.2);
-        color: #6FCFB0;
+    .tab-active {
+        background: rgba(60,184,122,0.2);
+        color: #3CB87A;
     }
 
     .tab-content {
@@ -307,42 +351,46 @@
     }
 
     .info-card {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(111,207,176,0.15);
-        border-radius: 16px;
+        background: #FFFFFF;
+        border: 1px solid rgba(60,184,122,0.2);
+        border-radius: 20px;
         padding: 4px 0;
+        box-shadow: 0 8px 24px rgba(26,44,34,0.08);
     }
 
     .info-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 13px 18px;
+        border-bottom: 1px solid rgba(26,44,34,0.05);
     }
 
     .info-row:last-child { border-bottom: none; }
 
     .info-label {
         font-size: 14px;
-        color: rgba(232,245,242,0.55);
+        color: rgba(26,44,34,0.45);
     }
 
     .info-value {
         font-size: 14px;
         font-weight: 600;
-        color: #E8F5F2;
+        color: #1A2C22;
     }
+
+    .info-value-mint { color: #3CB87A; }
 
     .visit-row {
         display: flex;
         align-items: center;
         gap: 12px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(111,207,176,0.12);
-        border-radius: 12px;
+        background: #FFFFFF;
+        border: 1px solid rgba(60,184,122,0.15);
+        border-radius: 14px;
         padding: 12px 14px;
         margin-bottom: 8px;
+        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
     }
 
     .visit-dot {
@@ -350,6 +398,7 @@
         height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
+        box-shadow: 0 0 8px currentColor;
     }
 
     .visit-details { flex: 1; }
@@ -357,20 +406,20 @@
     .visit-type {
         font-size: 14px;
         font-weight: 600;
-        color: #E8F5F2;
+        color: #1A2C22;
     }
 
     .visit-meta {
         font-size: 12px;
-        color: rgba(232,245,242,0.5);
+        color: rgba(26,44,34,0.45);
         margin-top: 2px;
     }
 
     .status-badge {
         font-size: 11px;
         font-weight: 600;
-        color: #6FCFB0;
-        background: rgba(111,207,176,0.12);
+        color: #3CB87A;
+        background: rgba(60,184,122,0.12);
         border-radius: 8px;
         padding: 3px 8px;
         white-space: nowrap;
@@ -378,9 +427,9 @@
 
     .empty-msg {
         text-align: center;
-        color: rgba(232,245,242,0.45);
+        color: rgba(26,44,34,0.35);
         font-size: 14px;
-        padding: 32px 0;
+        padding: 40px 0;
     }
 
     .cta-wrap {
@@ -388,13 +437,14 @@
     }
 
     .btn-primary {
-        background: #6FCFB0;
-        color: #0D1F1C;
+        background: #3CB87A;
+        color: #F8FCF9;
         border: none;
-        border-radius: 12px;
-        padding: 14px;
-        font-weight: 700;
+        border-radius: 16px;
+        padding: 15px;
+        font-weight: 800;
         font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         width: 100%;
         cursor: pointer;
         transition: opacity 0.2s, transform 0.15s;
@@ -407,18 +457,21 @@
         flex-direction: column;
         align-items: center;
         gap: 16px;
-        padding: 60px 20px;
-        color: rgba(232,245,242,0.6);
+        padding: 80px 20px;
+        color: rgba(26,44,34,0.45);
     }
 
-    .btn-back {
-        background: rgba(111,207,176,0.15);
-        border: 1px solid rgba(111,207,176,0.3);
-        color: #6FCFB0;
-        border-radius: 10px;
-        padding: 10px 20px;
+    .not-found-text { font-size: 16px; }
+
+    .btn-back-sm {
+        background: rgba(60,184,122,0.15);
+        border: 1px solid rgba(60,184,122,0.3);
+        color: #3CB87A;
+        border-radius: 12px;
+        padding: 10px 24px;
         font-size: 14px;
-        font-weight: 600;
+        font-weight: 700;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
     }
 </style>

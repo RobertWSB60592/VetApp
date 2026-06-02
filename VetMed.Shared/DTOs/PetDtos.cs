@@ -5,23 +5,39 @@ namespace VetMed.Shared.DTOs;
 public record PetDto(
     int Id,
     string Name,
-    Species Species,
+    string Species,
     string? Breed,
     decimal? WeightKg,
     DateOnly Born,
-    string? ImageUrl);
+    string? ImageUrl,
+    PetSex Sex,
+    bool Sterilized,
+    string? MicrochipNumber,
+    string? Color,
+    string? Notes);
 
 public record CreatePetDto(
     string Name,
-    Species Species,
+    string Species,
     string? Breed,
     decimal? WeightKg,
     DateOnly Born,
-    string? ImageUrl);
+    string? ImageUrl,
+    PetSex Sex,
+    bool Sterilized,
+    string? MicrochipNumber,
+    string? Color,
+    string? Notes);
 
 public record UpdatePetDto(
     string Name,
-    Species Species,
+    string Species,
     string? Breed,
     decimal? WeightKg,
-    string? ImageUrl);
+    DateOnly Born,
+    string? ImageUrl,
+    PetSex Sex,
+    bool Sterilized,
+    string? MicrochipNumber,
+    string? Color,
+    string? Notes);

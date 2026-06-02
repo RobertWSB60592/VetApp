@@ -1,12 +1,11 @@
 using FluentValidation;
 using VetMed.Shared.DTOs;
-using VetMed.Shared.Enums;
 
 namespace VetMed.Api.Validators;
 
-public sealed class CreatePetValidator : AbstractValidator<CreatePetDto>
+public sealed class UpdatePetValidator : AbstractValidator<UpdatePetDto>
 {
-    public CreatePetValidator()
+    public UpdatePetValidator()
     {
         RuleFor(x => x.Name).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Species).NotEmpty().MaximumLength(60);

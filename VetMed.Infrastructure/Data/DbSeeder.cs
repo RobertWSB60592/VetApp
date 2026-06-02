@@ -6,8 +6,15 @@ namespace VetMed.Infrastructure.Data;
 
 public static class DbSeeder
 {
+    private static readonly DayOfWeek[] Workdays =
+    {
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+    };
+
     public static async Task SeedAsync(AppDbContext db, Func<string, string> hashPassword, CancellationToken ct = default)
     {
+        await SeedSchedulesAsync(db, ct);
+
         if (await db.Doctors.AnyAsync(ct) || await db.Owners.AnyAsync(ct))
             return;
 
@@ -19,11 +26,14 @@ public static class DbSeeder
         };
         db.Doctors.AddRange(doctors);
 
+        foreach (var doctor in doctors)
+            AddWeeklySchedule(db, doctor);
+
         var owner = new Owner
         {
             FullName     = "Robert Demo",
             Email        = "demo@vetmed.pl",
-            PasswordHash = hashPassword("demo123"),
+            PasswordHash = "NOPASSWORD",
             CreatedAt    = DateTime.UtcNow
         };
 
@@ -47,13 +57,40 @@ public static class DbSeeder
 
         var pets = new List<Pet>
         {
-            new() { Name = "Ozzy",    Species = Species.Kot,  Breed = "Brytyjski krótkowłosy", WeightKg = 4.8m,  Born = new DateOnly(2019, 3, 12), Owner = owner },
-            new() { Name = "Ryszard", Species = Species.Pies, Breed = "Labrador retriever",     WeightKg = 28.5m, Born = new DateOnly(2018, 7, 4),  Owner = owner },
-            new() { Name = "Atos",    Species = Species.Kot,  Breed = "Maine Coon",             WeightKg = 6.1m,  Born = new DateOnly(2021, 1, 20), Owner = owner },
-            new() { Name = "Freddie", Species = Species.Pies, Breed = "Beagle",                 WeightKg = 11.2m, Born = new DateOnly(2020, 9, 8),  Owner = owner }
+            new() { Name = "Ozzy",    Species = "Kot",  Breed = "Brytyjski krótkowłosy", WeightKg = 4.8m,  Born = new DateOnly(2019, 3, 12), Sex = PetSex.Samiec, Owner = owner },
+            new() { Name = "Ryszard", Species = "Pies", Breed = "Labrador retriever",     WeightKg = 28.5m, Born = new DateOnly(2018, 7, 4),  Sex = PetSex.Samiec, Owner = owner },
+            new() { Name = "Atos",    Species = "Kot",  Breed = "Maine Coon",             WeightKg = 6.1m,  Born = new DateOnly(2021, 1, 20), Sex = PetSex.Samiec, Owner = owner },
+            new() { Name = "Freddie", Species = "Pies", Breed = "Beagle",                 WeightKg = 11.2m, Born = new DateOnly(2020, 9, 8),  Sex = PetSex.Samiec, Owner = owner }
         };
         db.Pets.AddRange(pets);
 
         await db.SaveChangesAsync(ct);
+    }
+
+    private static async Task SeedSchedulesAsync(AppDbContext db, CancellationToken ct)
+    {
+        var doctorsWithoutSchedule = await db.Doctors
+            .Where(d => !d.Schedules.Any())
+            .ToListAsync(ct);
+
+        if (doctorsWithoutSchedule.Count == 0)
+            return;
+
+        foreach (var doctor in doctorsWithoutSchedule)
+            AddWeeklySchedule(db, doctor);
+
+        await db.SaveChangesAsync(ct);
+    }
+
+    private static void AddWeeklySchedule(AppDbContext db, Doctor doctor)
+    {
+        foreach (var day in Workdays)
+            db.DoctorSchedules.Add(new DoctorSchedule
+            {
+                Doctor = doctor,
+                DayOfWeek = day,
+                StartTime = new TimeOnly(8, 0),
+                EndTime = new TimeOnly(16, 0)
+            });
     }
 }

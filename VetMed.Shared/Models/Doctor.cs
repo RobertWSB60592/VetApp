@@ -9,4 +9,5 @@ public class Doctor
     public bool IsAvailable { get; set; } = true;
 
     public ICollection<Visit> Visits { get; set; } = new List<Visit>();
+    public ICollection<DoctorSchedule> Schedules { get; set; } = new List<DoctorSchedule>();
 }

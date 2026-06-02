@@ -34,6 +34,11 @@ public sealed class PetService : IPetService
             WeightKg = dto.WeightKg,
             Born = dto.Born,
             ImageUrl = dto.ImageUrl,
+            Sex = dto.Sex,
+            Sterilized = dto.Sterilized,
+            MicrochipNumber = dto.MicrochipNumber,
+            Color = dto.Color,
+            Notes = dto.Notes,
             OwnerId = ownerId
         };
 
@@ -52,7 +57,13 @@ public sealed class PetService : IPetService
         pet.Species = dto.Species;
         pet.Breed = dto.Breed;
         pet.WeightKg = dto.WeightKg;
+        pet.Born = dto.Born;
         pet.ImageUrl = dto.ImageUrl;
+        pet.Sex = dto.Sex;
+        pet.Sterilized = dto.Sterilized;
+        pet.MicrochipNumber = dto.MicrochipNumber;
+        pet.Color = dto.Color;
+        pet.Notes = dto.Notes;
 
         _repo.Update(pet);
         await _repo.SaveChangesAsync(ct);
@@ -65,11 +76,13 @@ public sealed class PetService : IPetService
         if (pet is null || pet.OwnerId != ownerId)
             return false;
 
-        _repo.Delete(pet);
+        pet.IsArchived = true;
+        _repo.Update(pet);
         await _repo.SaveChangesAsync(ct);
         return true;
     }
 
     private static PetDto Map(Pet p) =>
-        new(p.Id, p.Name, p.Species, p.Breed, p.WeightKg, p.Born, p.ImageUrl);
+        new(p.Id, p.Name, p.Species, p.Breed, p.WeightKg, p.Born, p.ImageUrl,
+            p.Sex, p.Sterilized, p.MicrochipNumber, p.Color, p.Notes);
 }

@@ -1,29 +1,39 @@
 @page "/login"
 @layout AuthLayout
+@using VetMed.Shared.DTOs
 @inject IAuthApiService AuthApi
+@inject ApiClient Api
 @inject AppState AppState
 @inject NavigationManager Nav
 
 <div class="login-page">
-    <div class="logo-wrap">
-        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M26 4L6 13v14c0 11.05 8.55 21.38 20 23.93C37.45 48.38 46 38.05 46 27V13L26 4z" fill="rgba(111,207,176,0.15)" stroke="#6FCFB0" stroke-width="2"/>
-            <path d="M20 24h4v-4a2 2 0 1 1 4 0v4h4a2 2 0 1 1 0 4h-4v4a2 2 0 1 1-4 0v-4h-4a2 2 0 1 1 0-4z" fill="#6FCFB0"/>
-        </svg>
-        <span class="logo-text">VetMed</span>
+    <div class="login-glow"></div>
+
+    <div class="logo-section">
+        <div class="logo-card">
+            <svg width="60" height="60" viewBox="0 0 40 40" fill="none">
+                <path d="M20 3L4 10v11c0 9 7 14 16 15 9-1 16-6 16-15V10L20 3Z" fill="rgba(60,184,122,0.18)" stroke="#3CB87A" stroke-width="1.5"/>
+                <rect x="17.5" y="12" width="5" height="16" rx="2.5" fill="#3CB87A"/>
+                <rect x="12" y="17.5" width="16" height="5" rx="2.5" fill="#3CB87A"/>
+            </svg>
+        </div>
+        <div class="logo-title">VETMED</div>
+        <div class="logo-sub">Opieka nad Twoimi pupilami</div>
     </div>
 
-    <h1 class="page-title">Witaj z powrotem</h1>
-    <p class="page-sub">Zaloguj się do swojego konta</p>
+    <div class="login-form-area">
+        <h1 class="form-heading">Witaj z powrotem</h1>
+        <p class="form-sub">Zaloguj się do swojego konta</p>
 
-    <div class="card">
         <div class="field">
-            <label>Email</label>
-            <input type="email" @bind="email" placeholder="twoj@email.pl" autocomplete="email" />
+            <input type="email" class="glass-input" @bind="email" placeholder="Email" autocomplete="email" />
         </div>
         <div class="field">
-            <label>Hasło</label>
-            <input type="password" @bind="password" placeholder="••••••••" autocomplete="current-password" />
+            <input type="password" class="glass-input" @bind="password" placeholder="Hasło" autocomplete="current-password" />
+        </div>
+
+        <div class="forgot-row">
+            <a href="#" class="forgot-link">Zapomniałem hasła</a>
         </div>
 
         @if (!string.IsNullOrEmpty(error))
@@ -32,29 +42,20 @@
         }
 
         <button class="btn-primary" @onclick="LoginAsync" disabled="@loading">
-            @if (loading)
-            {
-                <span>Logowanie...</span>
-            }
-            else
-            {
-                <span>Zaloguj się</span>
-            }
+            @(loading ? "Logowanie..." : "Zaloguj się")
         </button>
-    </div>
 
-    <div class="quick-login">
-        <span class="quick-label">Szybki dostęp</span>
-        <div class="quick-chips">
-            <button class="chip" @onclick='() => QuickLogin("demo@vetmed.pl", "demo123")'>👤 Demo</button>
-            <button class="chip chip-test" @onclick='() => QuickLogin("test@vetmed.pl", "")'>🧪 Test (bez hasła)</button>
-            <button class="chip chip-admin" @onclick='() => QuickLogin("admin@vetmed.pl", "admin123")'>🔑 Admin</button>
+        <div class="divider"><span>lub</span></div>
+
+        <a href="/register" class="btn-secondary">Utwórz konto</a>
+
+        <div class="quick-section">
+            <div class="quick-chips">
+                <button class="quick-chip" @onclick='() => QuickLogin("demo@vetmed.pl", "demo123")'>&#x1F464; Demo</button>
+                <button class="quick-chip" @onclick='() => QuickLogin("test@vetmed.pl", "")'>&#x1F9EA; Test</button>
+                <button class="quick-chip" @onclick='() => QuickLogin("admin@vetmed.pl", "admin123")'>&#x1F511; Admin</button>
+            </div>
         </div>
-    </div>
-
-    <div class="footer-link">
-        Nie masz konta?
-        <a href="/register">Zarejestruj się</a>
     </div>
 </div>
 
@@ -92,15 +93,17 @@
             var result = await AuthApi.LoginAsync(new LoginDto(email, password));
             if (result is null)
             {
-                error = "Nieprawidłowy email lub hasło.";
+                error = Api.LastError is not null
+                    ? $"Błąd API: {Api.LastError}"
+                    : "Nieprawidłowy email lub hasło.";
                 return;
             }
             AppState.SetAuth(result);
             Nav.NavigateTo("/", replace: true);
         }
-        catch
+        catch (Exception ex)
         {
-            error = "Błąd połączenia. Spróbuj ponownie.";
+            error = $"Błąd połączenia: {ex.Message}";
         }
         finally
         {
@@ -111,145 +114,181 @@
 
 <style>
     .login-page {
-        min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        padding: 0 24px 40px;
+        background: #F8FCF9;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-glow {
+        position: absolute;
+        top: -80px;
+        right: -80px;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(60,184,122,0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .logo-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 64px;
+        margin-bottom: 40px;
+    }
+
+    .logo-card {
+        width: 100px;
+        height: 100px;
+        background: rgba(60,184,122,0.1);
+        border: 1px solid rgba(60,184,122,0.3);
+        border-radius: 26px;
+        display: flex;
         align-items: center;
         justify-content: center;
-        padding: 32px 24px;
-        background: #0D1F1C;
+        margin-bottom: 16px;
     }
 
-    .logo-wrap {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 28px;
-    }
-
-    .logo-text {
-        font-size: 28px;
-        font-weight: 800;
-        color: #6FCFB0;
-        letter-spacing: -0.5px;
-    }
-
-    .page-title {
-        font-size: 22px;
+    .logo-title {
+        font-family: 'Josefin Slab', serif;
+        font-size: 26px;
         font-weight: 700;
-        color: #E8F5F2;
+        color: #3CB87A;
+        letter-spacing: 3px;
         margin-bottom: 6px;
-        text-align: center;
     }
 
-    .page-sub {
-        font-size: 14px;
-        color: rgba(232,245,242,0.6);
-        margin-bottom: 28px;
-        text-align: center;
+    .logo-sub {
+        font-size: 12px;
+        color: rgba(26,44,34,0.45);
     }
 
-    .card {
+    .login-form-area {
         width: 100%;
-        max-width: 380px;
-        background: rgba(255,255,255,0.05);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(111,207,176,0.2);
-        border-radius: 20px;
-        padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 0;
+    }
+
+    .form-heading {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1A2C22;
+        margin-bottom: 6px;
+    }
+
+    .form-sub {
+        font-size: 13px;
+        color: rgba(26,44,34,0.45);
+        margin-bottom: 24px;
     }
 
     .field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        margin-bottom: 12px;
     }
 
-    .field label {
-        font-size: 13px;
-        font-weight: 600;
-        color: rgba(232,245,242,0.7);
-    }
-
-    .field input {
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: #E8F5F2;
-        border-radius: 12px;
-        padding: 12px 16px;
+    .glass-input {
+        width: 100%;
+        background: rgba(26,44,34,0.07);
+        border: 1px solid rgba(60,184,122,0.2);
+        color: #1A2C22;
+        border-radius: 14px;
+        padding: 14px 16px;
         font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         outline: none;
         transition: border-color 0.2s;
     }
 
-    .field input:focus {
-        border-color: rgba(111,207,176,0.6);
+    .glass-input:focus { border-color: rgba(60,184,122,0.6); }
+    .glass-input::placeholder { color: rgba(26,44,34,0.3); }
+
+    .forgot-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
     }
 
-    .field input::placeholder {
-        color: rgba(232,245,242,0.3);
+    .forgot-link {
+        font-size: 12px;
+        color: #3CB87A;
+        text-decoration: none;
+        font-weight: 600;
     }
 
     .error-msg {
-        background: rgba(255,80,80,0.12);
-        border: 1px solid rgba(255,80,80,0.3);
-        border-radius: 10px;
-        padding: 10px 14px;
+        background: rgba(255,112,112,0.1);
+        border: 1px solid rgba(255,112,112,0.3);
+        border-radius: 12px;
+        padding: 12px 14px;
         font-size: 13px;
-        color: #ff8080;
+        color: #FF7070;
+        margin-bottom: 14px;
     }
 
     .btn-primary {
-        background: #6FCFB0;
-        color: #0D1F1C;
-        border: none;
-        border-radius: 12px;
-        padding: 14px;
-        font-weight: 700;
-        font-size: 15px;
         width: 100%;
+        background: #3CB87A;
+        color: #F8FCF9;
+        border: none;
+        border-radius: 16px;
+        padding: 15px;
+        font-weight: 800;
+        font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
         transition: opacity 0.2s, transform 0.15s;
-        margin-top: 4px;
+        margin-bottom: 16px;
     }
 
-    .btn-primary:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-primary:active:not(:disabled) { transform: scale(0.98); }
 
-    .footer-link {
-        margin-top: 24px;
-        font-size: 14px;
-        color: rgba(232,245,242,0.6);
-    }
-
-    .footer-link a {
-        color: #6FCFB0;
-        font-weight: 600;
-        text-decoration: none;
-        margin-left: 4px;
-    }
-
-    .quick-login {
-        margin-top: 24px;
-        width: 100%;
-        max-width: 380px;
-        text-align: center;
-    }
-
-    .quick-label {
+    .divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+        color: rgba(26,44,34,0.25);
         font-size: 12px;
-        color: rgba(232,245,242,0.4);
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
+    }
+
+    .divider::before, .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(60,184,122,0.15);
+    }
+
+    .btn-secondary {
         display: block;
-        margin-bottom: 10px;
+        width: 100%;
+        background: rgba(26,44,34,0.07);
+        border: 1px solid rgba(60,184,122,0.2);
+        color: #1A2C22;
+        border-radius: 16px;
+        padding: 15px;
+        font-weight: 700;
+        font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        text-decoration: none;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-bottom: 32px;
+    }
+
+    .btn-secondary:hover { background: rgba(26,44,34,0.11); }
+
+    .quick-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .quick-chips {
@@ -259,22 +298,17 @@
         justify-content: center;
     }
 
-    .chip {
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(111,207,176,0.2);
-        color: #E8F5F2;
+    .quick-chip {
+        background: rgba(26,44,34,0.07);
+        border: 1px solid rgba(60,184,122,0.2);
+        color: rgba(26,44,34,0.7);
         border-radius: 20px;
         padding: 7px 14px;
         font-size: 13px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
         transition: background 0.2s;
     }
 
-    .chip:hover { background: rgba(255,255,255,0.12); }
-
-    .chip-test { border-color: rgba(255,200,80,0.3); color: #ffc850; }
-    .chip-test:hover { background: rgba(255,200,80,0.1); }
-
-    .chip-admin { border-color: rgba(180,120,255,0.3); color: #b478ff; }
-    .chip-admin:hover { background: rgba(180,120,255,0.1); }
+    .quick-chip:hover { background: rgba(60,184,122,0.12); color: #3CB87A; }
 </style>
