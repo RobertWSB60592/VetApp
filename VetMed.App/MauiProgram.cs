@@ -27,7 +27,7 @@ public static class MauiProgram
         const string ApiBase = "http://10.0.2.2:5100/";
 #else
         // Produkcja: URL Cloud Run (uzupełnij po pierwszym deployu)
-        const string ApiBase = "https://CLOUD_RUN_URL.run.app/";
+        const string ApiBase = "https://vetmed-api-466028938317.europe-central2.run.app/";
 #endif
         builder.Services.AddHttpClient<ApiClient>(c =>
             c.BaseAddress = new Uri(ApiBase));
