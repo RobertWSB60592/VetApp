@@ -49,19 +49,15 @@
         display: flex;
         flex-direction: column;
         height: 100dvh;
-        background: var(--bg);
-    box-shadow: inset -1px 0 0 rgba(60,184,122,0.06);
         width: 100%;
-        max-width: 430px;
-        position: relative;
-        overflow: hidden;
+        background: var(--bg);
     }
 
     .page-content {
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
-        padding-bottom: 90px;
+        min-height: 0;
         scrollbar-width: none;
     }
 
