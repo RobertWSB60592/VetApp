@@ -168,6 +168,9 @@
         </div>
 
         <div class="cta-wrap">
+            <button class="btn-secondary" @onclick='() => Nav.NavigateTo($"/pets/{Id}/edit")'>
+                Edytuj
+            </button>
             <button class="btn-primary" @onclick='() => Nav.NavigateTo($"/book-visit?petId={Id}")'>
                 Umów wizytę
             </button>
@@ -434,9 +437,28 @@
 
     .cta-wrap {
         padding: 12px 16px 20px;
+        display: flex;
+        gap: 10px;
     }
 
+    .btn-secondary {
+        background: rgba(60,184,122,0.1);
+        color: #3CB87A;
+        border: 1px solid rgba(60,184,122,0.3);
+        border-radius: 16px;
+        padding: 15px 20px;
+        font-weight: 700;
+        font-size: 15px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.15s;
+        white-space: nowrap;
+    }
+
+    .btn-secondary:active { transform: scale(0.98); }
+
     .btn-primary {
+        flex: 1;
         background: #3CB87A;
         color: #F8FCF9;
         border: none;
