@@ -26,6 +26,8 @@
             await AppState.TryRestoreAsync();
             if (!AppState.IsAuthenticated)
                 Nav.NavigateTo("/login", replace: true);
+            else
+                StateHasChanged();
         }
     }
 
