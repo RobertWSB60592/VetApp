@@ -15,15 +15,52 @@
         </button>
         <div>
             <div class="page-title">Umów wizytę</div>
-            <div class="page-sub">Krok @step z 5</div>
+            <div class="page-sub">Krok @CurrentPhase z 3</div>
         </div>
     </div>
 
-    <div class="steps-indicator">
-        @for (int i = 1; i <= 5; i++)
+    <div class="stepper">
+        @foreach (var ph in phases)
         {
-            var si = i;
-            <div class="step-dot @(step == si ? "step-active" : step > si ? "step-done" : "")"></div>
+            var p = ph;
+            var done = CurrentPhase > p.Num;
+            var active = CurrentPhase == p.Num;
+            <div class="ph @(active ? "ph-active" : done ? "ph-done" : "")">
+                <div class="ph-badge">
+                    @if (done)
+                    {
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    }
+                    else if (p.Num == 1)
+                    {
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="4" r="2"/>
+                            <circle cx="18" cy="8" r="2"/>
+                            <circle cx="20" cy="16" r="2"/>
+                            <path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>
+                        </svg>
+                    }
+                    else if (p.Num == 2)
+                    {
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3.5 12h4l2 5 4-12 2 7h5"/>
+                        </svg>
+                    }
+                    else
+                    {
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    }
+                </div>
+                <div class="ph-krok">Krok @p.Num</div>
+                <div class="ph-label">@p.Label</div>
+            </div>
         }
     </div>
 
@@ -66,15 +103,52 @@
         else if (step == 2)
         {
             <div class="step-section">
-                <h2 class="step-title">Rodzaj wizyty</h2>
-                <div class="type-grid">
-                    @foreach (var t in visitTypes)
+                <h2 class="step-title">Wybierz typ wizyty</h2>
+                <div class="cat-list">
+                    @foreach (var cat in visitCategories)
                     {
-                        var tv = t;
-                        <button class="type-card @(selectedType == tv.Type ? "type-card-active" : "")" @onclick="() => { selectedType = tv.Type; step = 3; }">
-                            <span class="type-icon">@tv.Icon</span>
-                            <span class="type-label">@tv.Label</span>
-                        </button>
+                        var c = cat;
+                        var open = expandedCategory == c.Name;
+                        <div class="cat @(open ? "cat-open" : "")">
+                            <button class="cat-head" @onclick="() => ToggleCategory(c.Name)">
+                                <span class="cat-icon">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3.5 12h4l2 5 4-12 2 7h5"/>
+                                    </svg>
+                                </span>
+                                <span class="cat-name">@c.Name</span>
+                                <span class="cat-chevron">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="6 9 12 15 18 9"/>
+                                    </svg>
+                                </span>
+                            </button>
+                            @if (open)
+                            {
+                                <div class="cat-items">
+                                    @foreach (var item in c.Items)
+                                    {
+                                        var it = item;
+                                        <button class="cat-item @(selectedSubtype == it.Label ? "cat-item-active" : "")" @onclick="() => SelectSubtype(it)">
+                                            <span class="cat-item-icon">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                                    <line x1="3" y1="10" x2="21" y2="10"/>
+                                                </svg>
+                                            </span>
+                                            <span class="cat-item-label">@it.Label</span>
+                                            <span class="cat-item-go">
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="9 18 15 12 9 6"/>
+                                                </svg>
+                                            </span>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     }
                 </div>
                 <button class="btn-back-step" @onclick="() => step = 1">Wróć</button>
@@ -177,7 +251,7 @@
                 <div class="summary-card">
                     <div class="summary-row">
                         <span class="s-label">Rodzaj</span>
-                        <span class="s-value">@VisitLabel(selectedType)</span>
+                        <span class="s-value">@(selectedSubtype ?? VisitLabel(selectedType))</span>
                     </div>
                     <div class="summary-row">
                         <span class="s-label">Lekarz</span>
@@ -256,15 +330,71 @@
 
     private static string DowShort(DayOfWeek d) => dowShort[(int)d];
 
-    private record VisitTypeOption(VetMed.Shared.Enums.VisitType Type, string Icon, string Label);
+    private record VisitSubtype(string Label, VetMed.Shared.Enums.VisitType Type);
+    private record VisitCategory(string Name, VisitSubtype[] Items);
 
-    private static readonly VisitTypeOption[] visitTypes = new[]
+    private static readonly VisitCategory[] visitCategories = new[]
     {
-        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Szczepienie, "💉", "Szczepienie"),
-        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Kontrola,    "🩺", "Kontrola"),
-        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Zabieg,      "🔬", "Zabieg"),
-        new VisitTypeOption(VetMed.Shared.Enums.VisitType.Nagly,       "🚨", "Nagły"),
+        new VisitCategory("Interna i profilaktyka", new[]
+        {
+            new VisitSubtype("Wizyta profilaktyczna", VetMed.Shared.Enums.VisitType.Kontrola),
+            new VisitSubtype("Wizyta internistyczna", VetMed.Shared.Enums.VisitType.Kontrola),
+            new VisitSubtype("Szczepienie", VetMed.Shared.Enums.VisitType.Szczepienie),
+            new VisitSubtype("Pobranie krwi", VetMed.Shared.Enums.VisitType.Diagnostyka),
+        }),
+        new VisitCategory("Diagnostyka obrazowa", new[]
+        {
+            new VisitSubtype("RTG", VetMed.Shared.Enums.VisitType.Diagnostyka),
+            new VisitSubtype("USG", VetMed.Shared.Enums.VisitType.Diagnostyka),
+        }),
+        new VisitCategory("Ortopedia", new[]
+        {
+            new VisitSubtype("Konsultacja ortopedyczna", VetMed.Shared.Enums.VisitType.Kontrola),
+            new VisitSubtype("Badanie kulawizny", VetMed.Shared.Enums.VisitType.Kontrola),
+        }),
+        new VisitCategory("Dermatologia i alergologia", new[]
+        {
+            new VisitSubtype("Konsultacja dermatologiczna", VetMed.Shared.Enums.VisitType.Kontrola),
+            new VisitSubtype("Testy alergiczne", VetMed.Shared.Enums.VisitType.Diagnostyka),
+        }),
+        new VisitCategory("Okulistyka", new[]
+        {
+            new VisitSubtype("Konsultacja okulistyczna", VetMed.Shared.Enums.VisitType.Kontrola),
+        }),
+        new VisitCategory("Chirurgia i zabiegi", new[]
+        {
+            new VisitSubtype("Zabieg chirurgiczny", VetMed.Shared.Enums.VisitType.Zabieg),
+            new VisitSubtype("Sterylizacja / kastracja", VetMed.Shared.Enums.VisitType.Zabieg),
+            new VisitSubtype("Zdjęcie szwów", VetMed.Shared.Enums.VisitType.Kontrola),
+        }),
+        new VisitCategory("Nagły przypadek", new[]
+        {
+            new VisitSubtype("Wizyta nagła", VetMed.Shared.Enums.VisitType.Nagly),
+        }),
     };
+
+    private string? expandedCategory = visitCategories[0].Name;
+    private string? selectedSubtype;
+
+    private void ToggleCategory(string name) => expandedCategory = expandedCategory == name ? null : name;
+
+    private void SelectSubtype(VisitSubtype s)
+    {
+        selectedType = s.Type;
+        selectedSubtype = s.Label;
+        step = 3;
+    }
+
+    private record Phase(int Num, string Label);
+
+    private static readonly Phase[] phases =
+    {
+        new(1, "Zwierzę"),
+        new(2, "Typ wizyty"),
+        new(3, "Termin"),
+    };
+
+    private int CurrentPhase => step <= 1 ? 1 : step == 2 ? 2 : 3;
 
     private bool CanSubmit => selectedDoctorId.HasValue && selectedPetId > 0 && !string.IsNullOrEmpty(selectedTime);
 
@@ -367,7 +497,11 @@
             var wallClock = selectedDay.ToDateTime(TimeOnly.MinValue).AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
             var scheduledAt = DateTime.SpecifyKind(wallClock, DateTimeKind.Local).ToUniversalTime();
 
-            var dto = new CreateVisitDto(scheduledAt, selectedType, selectedPetId, selectedDoctorId!.Value, notes);
+            var finalNotes = string.IsNullOrWhiteSpace(selectedSubtype)
+                ? notes
+                : string.IsNullOrWhiteSpace(notes) ? selectedSubtype : $"{selectedSubtype} — {notes}";
+
+            var dto = new CreateVisitDto(scheduledAt, selectedType, selectedPetId, selectedDoctorId!.Value, finalNotes);
             var result = await VisitApi.CreateVisitAsync(dto);
             if (result is null)
             {
@@ -442,31 +576,59 @@
         margin-top: 2px;
     }
 
-    .steps-indicator {
+    .stepper {
         display: flex;
         gap: 6px;
-        justify-content: center;
         margin-bottom: 28px;
     }
 
-    .step-dot {
-        width: 8px;
-        height: 8px;
+    .ph {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        text-align: center;
+    }
+
+    .ph-badge {
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        background: rgba(26,44,34,0.12);
-        transition: background 0.3s, transform 0.2s, width 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(26,44,34,0.06);
+        color: rgba(26,44,34,0.4);
+        border: 1.5px solid transparent;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
 
-    .step-active {
+    .ph-active .ph-badge {
+        background: rgba(60,184,122,0.15);
+        color: #3CB87A;
+        border-color: #3CB87A;
+    }
+
+    .ph-done .ph-badge {
         background: #3CB87A;
-        transform: scale(1.3);
-        width: 20px;
-        border-radius: 4px;
+        color: #F8FCF9;
     }
 
-    .step-done {
-        background: rgba(60,184,122,0.45);
+    .ph-krok {
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(26,44,34,0.4);
     }
+
+    .ph-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(26,44,34,0.4);
+    }
+
+    .ph-active .ph-krok, .ph-active .ph-label { color: #3CB87A; }
+    .ph-done .ph-krok, .ph-done .ph-label { color: rgba(26,44,34,0.6); }
 
     .step-section {
         display: flex;
@@ -481,40 +643,85 @@
         margin-bottom: 4px;
     }
 
-    .type-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
+    .cat-list { display: flex; flex-direction: column; gap: 10px; }
 
-    .type-card {
+    .cat {
         background: #FFFFFF;
         border: 1px solid rgba(60,184,122,0.2);
-        border-radius: 20px;
-        padding: 22px 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        transition: border-color 0.2s, background 0.2s;
+        border-radius: 16px;
+        overflow: hidden;
         box-shadow: 0 4px 12px rgba(26,44,34,0.05);
+        transition: border-color 0.2s;
     }
 
-    .type-card-active {
-        border-color: #3CB87A;
-        background: rgba(60,184,122,0.15);
+    .cat-open { border-color: #3CB87A; }
+
+    .cat-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        padding: 16px;
+        cursor: pointer;
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    .type-card:active { transform: scale(0.97); }
+    .cat-icon { color: #3CB87A; display: flex; flex-shrink: 0; }
 
-    .type-icon { font-size: 30px; }
-
-    .type-label {
-        font-size: 13px;
+    .cat-name {
+        flex: 1;
+        font-size: 15px;
         font-weight: 700;
         color: #1A2C22;
     }
+
+    .cat-chevron {
+        color: rgba(26,44,34,0.4);
+        display: flex;
+        flex-shrink: 0;
+        transition: transform 0.2s;
+    }
+
+    .cat-open .cat-chevron { transform: rotate(180deg); color: #3CB87A; }
+
+    .cat-items {
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid rgba(26,44,34,0.06);
+    }
+
+    .cat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(26,44,34,0.05);
+        padding: 14px 16px;
+        cursor: pointer;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        transition: background 0.15s;
+    }
+
+    .cat-item:last-child { border-bottom: none; }
+    .cat-item:active { background: rgba(60,184,122,0.08); }
+    .cat-item-active { background: rgba(60,184,122,0.12); }
+
+    .cat-item-icon { color: #3CB87A; display: flex; flex-shrink: 0; }
+
+    .cat-item-label {
+        flex: 1;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1A2C22;
+    }
+
+    .cat-item-go { color: #3CB87A; display: flex; flex-shrink: 0; }
 
     .doctor-card {
         background: #FFFFFF;
