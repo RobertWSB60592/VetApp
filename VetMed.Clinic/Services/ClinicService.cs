@@ -1,0 +1,116 @@
+using Microsoft.EntityFrameworkCore;
+using VetMed.Infrastructure.Data;
+using VetMed.Shared.Enums;
+using VetMed.Shared.Models;
+
+namespace VetMed.Clinic.Services;
+
+public record ClinicVisitVm(
+    int Id,
+    DateTime ScheduledAt,
+    VisitType Type,
+    VisitStatus Status,
+    string? Notes,
+    string? RejectionReason,
+    string PetName,
+    string PetSpecies,
+    string OwnerName,
+    string? OwnerPhone,
+    string DoctorName);
+
+public record DoctorScheduleVm(
+    int DoctorId,
+    string DoctorName,
+    string Specialization,
+    bool IsAvailable,
+    IReadOnlyList<ScheduleEntryVm> Schedule);
+
+public record ScheduleEntryVm(DayOfWeek Day, TimeOnly Start, TimeOnly End);
+
+public sealed class ClinicService
+{
+    private readonly AppDbContext _db;
+
+    public ClinicService(AppDbContext db) => _db = db;
+
+    public async Task<List<ClinicVisitVm>> GetPendingAsync(CancellationToken ct = default) =>
+        await Project(_db.Visits
+                .Where(v => v.Status == VisitStatus.Oczekujaca)
+                .OrderBy(v => v.ScheduledAt))
+            .ToListAsync(ct);
+
+    public async Task<List<ClinicVisitVm>> GetAllAsync(VisitStatus? status, int? doctorId, CancellationToken ct = default)
+    {
+        var q = _db.Visits.AsQueryable();
+        if (status.HasValue)
+            q = q.Where(v => v.Status == status.Value);
+        if (doctorId.HasValue)
+            q = q.Where(v => v.DoctorId == doctorId.Value);
+
+        return await Project(q.OrderByDescending(v => v.ScheduledAt))
+            .ToListAsync(ct);
+    }
+
+    public async Task<int> CountPendingAsync(CancellationToken ct = default) =>
+        await _db.Visits.CountAsync(v => v.Status == VisitStatus.Oczekujaca, ct);
+
+    public async Task<bool> ApproveAsync(int id, CancellationToken ct = default)
+    {
+        var visit = await _db.Visits.FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (visit is null || visit.Status != VisitStatus.Oczekujaca)
+            return false;
+
+        visit.Status = VisitStatus.Potwierdzona;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> RejectAsync(int id, string? reason, CancellationToken ct = default)
+    {
+        var visit = await _db.Visits.FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (visit is null || visit.Status != VisitStatus.Oczekujaca)
+            return false;
+
+        visit.Status = VisitStatus.Odwolana;
+        visit.RejectionReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<List<DoctorScheduleVm>> GetDoctorSchedulesAsync(CancellationToken ct = default) =>
+        await _db.Doctors
+            .OrderBy(d => d.FullName)
+            .Select(d => new DoctorScheduleVm(
+                d.Id,
+                d.FullName,
+                d.Specialization,
+                d.IsAvailable,
+                d.Schedules
+                    .OrderBy(s => s.DayOfWeek)
+                    .ThenBy(s => s.StartTime)
+                    .Select(s => new ScheduleEntryVm(s.DayOfWeek, s.StartTime, s.EndTime))
+                    .ToList()))
+            .ToListAsync(ct);
+
+    public async Task<List<(int Id, string Name)>> GetDoctorOptionsAsync(CancellationToken ct = default) =>
+        (await _db.Doctors
+            .OrderBy(d => d.FullName)
+            .Select(d => new { d.Id, d.FullName })
+            .ToListAsync(ct))
+            .Select(d => (d.Id, d.FullName))
+            .ToList();
+
+    private static IQueryable<ClinicVisitVm> Project(IQueryable<Visit> q) =>
+        q.Select(v => new ClinicVisitVm(
+            v.Id,
+            v.ScheduledAt,
+            v.Type,
+            v.Status,
+            v.Notes,
+            v.RejectionReason,
+            v.Pet.Name,
+            v.Pet.Species,
+            v.Pet.Owner.FullName,
+            v.Pet.Owner.Phone,
+            v.Doctor.FullName));
+}

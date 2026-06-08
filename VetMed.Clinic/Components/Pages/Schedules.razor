@@ -1,0 +1,65 @@
+@page "/schedules"
+@attribute [Authorize]
+@inject ClinicService Clinic
+
+<PageTitle>Grafik lekarzy — VetMed Klinika</PageTitle>
+
+<h1 class="h3 mb-1">Grafik lekarzy</h1>
+<p class="text-muted mb-4">Tygodniowy harmonogram dostępności (podgląd).</p>
+
+@if (loading)
+{
+    <div class="spinner-border text-success" role="status"></div>
+}
+else if (doctors.Count == 0)
+{
+    <div class="alert alert-light border">Brak lekarzy w systemie.</div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        @foreach (var d in doctors)
+        {
+            <div class="card shadow-sm" @key="d.DoctorId">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="fw-semibold">@d.DoctorName</span>
+                            <span class="text-muted small">· @d.Specialization</span>
+                        </div>
+                        <span class="badge @(d.IsAvailable ? "bg-success" : "bg-secondary")">
+                            @(d.IsAvailable ? "Przyjmuje" : "Niedostępny")
+                        </span>
+                    </div>
+
+                    @if (d.Schedule.Count == 0)
+                    {
+                        <div class="text-muted small">Brak zdefiniowanego grafiku.</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var entry in d.Schedule)
+                            {
+                                <span class="badge rounded-pill bg-light text-dark border">
+                                    @ClinicFormat.DayLabel(entry.Day): @entry.Start.ToString("HH:mm")–@entry.End.ToString("HH:mm")
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<DoctorScheduleVm> doctors = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        doctors = await Clinic.GetDoctorSchedulesAsync();
+        loading = false;
+    }
+}
