@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VETMED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Josefin+Slab:wght@700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:background .4s; }
+  body.dark  { background: radial-gradient(ellipse at 30% 20%, #13312B 0%, #0D1F1C 60%, #08130F 100%); }
+  body.light { background: radial-gradient(ellipse at 30% 20%, #E4F2EC 0%, #EFF6F2 60%, #F4F9F6 100%); }
+  #root { display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-family:'Plus Jakarta Sans',sans-serif; }
+
+  @keyframes slideInRight { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes slideInLeft  { from{transform:translateX(-30%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes fadeUp       { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes popIn        { from{transform:scale(0.92);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes successPop   { 0%{transform:scale(0) rotate(-15deg);opacity:0} 60%{transform:scale(1.2) rotate(4deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+  @keyframes confettiFall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(130px) rotate(360deg);opacity:0} }
+  @keyframes ringPulse    { 0%{transform:scale(0.8);opacity:0.7} 100%{transform:scale(2.4);opacity:0} }
+  @keyframes slideUpFade  { from{transform:translateY(24px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes notifSlide   { from{transform:translateX(14px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes shimmer      { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+  .enter-right { animation: slideInRight 0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+  .enter-left  { animation: slideInLeft  0.32s cubic-bezier(0.22,1,0.36,1) forwards; }
+  input,textarea { outline:none; border:none; background:transparent; font-family:'Plus Jakarta Sans',sans-serif; }
+  button { cursor:pointer; border:none; background:none; font-family:'Plus Jakarta Sans',sans-serif; }
+  a { text-decoration:none; }
+  ::-webkit-scrollbar { display:none; }
+  .tap:active { opacity:.7; transform:scale(.97); }
+  .card-tap:active { transform:scale(.97); }
+</style>
+</head>
+<body class="light">
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback, createContext, useContext } = React;
+
+/* ════════════════════════════════════════
+   THEME SYSTEM
+════════════════════════════════════════ */
+const DARK = {
+  mode: 'dark',
+  bg:       '#0D1F1C', surface:  '#122A26', card:     '#163029', elevated: '#1C3A32',
+  mint:     '#6FCFB0', mintDim:  '#4FAE91', mintGlow: 'rgba(111,207,176,0.15)',
+  onMint:   '#0D1F1C',
+  white:    '#FFFFFF', offWhite: '#EAF6F1', muted:    'rgba(234,246,241,0.48)',
+  faint:    'rgba(234,246,241,0.09)', border: 'rgba(111,207,176,0.22)',
+  text:     '#EAF6F1', textSub:  'rgba(234,246,241,0.55)',
+  inputBg:  'rgba(234,246,241,0.06)', danger: '#FF7B7B', dangerBg: 'rgba(255,123,123,0.12)',
+  overlay:  'rgba(0,0,0,0.45)', heroScrim: 'rgba(13,31,28,0.55)', heroBorder: 'rgba(111,207,176,0.45)',
+  cardShadow: '0 8px 24px rgba(0,0,0,0.32)', navShadow: '0 -8px 32px rgba(0,0,0,0.42)',
+  vWizyta:'#6FCFB0', vSzczep:'#F2C14E', vZabieg:'#F08DAE', vDiag:'#6FA8E0',
+  vWizytaBg:'rgba(111,207,176,0.14)', vSzczepBg:'rgba(242,193,78,0.14)', vZabiegBg:'rgba(240,141,174,0.14)', vDiagBg:'rgba(111,168,224,0.14)',
+  warnBg:'rgba(242,193,78,0.12)', warnBorder:'rgba(242,193,78,0.3)',
+  okBg:'rgba(111,207,176,0.10)', okBorder:'rgba(111,207,176,0.24)',
+  confetti: ['#6FCFB0','#F2C14E','#F08DAE','#C4F5E1','#A8EDDC'],
+};
+const LIGHT = {
+  mode: 'light',
+  bg:       '#F1F7F4', surface:  '#FFFFFF', card:     '#FFFFFF', elevated: '#E8F2ED',
+  mint:     '#1F7A63', mintDim:  '#155E4B', mintGlow: 'rgba(31,122,99,0.10)',
+  onMint:   '#FFFFFF',
+  white:    '#FFFFFF', offWhite: '#0F2722', muted:    'rgba(15,39,34,0.50)',
+  faint:    'rgba(15,39,34,0.055)', border: 'rgba(31,122,99,0.16)',
+  text:     '#0F2722', textSub:  'rgba(15,39,34,0.55)',
+  inputBg:  'rgba(15,39,34,0.045)', danger: '#C0392B', dangerBg: 'rgba(192,57,43,0.10)',
+  overlay:  'rgba(15,39,34,0.40)', heroScrim: 'rgba(13,31,28,0.55)', heroBorder: 'rgba(255,255,255,0.5)',
+  cardShadow: '0 2px 8px rgba(20,60,50,0.06), 0 10px 26px rgba(20,60,50,0.05)', navShadow: '0 -4px 22px rgba(20,60,50,0.10)',
+  vWizyta:'#1F7A63', vSzczep:'#B07A12', vZabieg:'#C24B73', vDiag:'#2E6FB0',
+  vWizytaBg:'rgba(31,122,99,0.10)', vSzczepBg:'rgba(176,122,18,0.10)', vZabiegBg:'rgba(194,75,115,0.10)', vDiagBg:'rgba(46,111,176,0.10)',
+  warnBg:'rgba(176,122,18,0.08)', warnBorder:'rgba(176,122,18,0.22)',
+  okBg:'rgba(31,122,99,0.07)', okBorder:'rgba(31,122,99,0.18)',
+  confetti: ['#1F7A63','#E0A92E','#E0739B','#7FD9C0','#3E8FD0'],
+};
+
+const VISIT_COLOR = {
+  'Badanie ogólne':   { c:'vWizyta', bg:'vWizytaBg' },
+  'Kontrola':         { c:'vWizyta', bg:'vWizytaBg' },
+  'Pierwsza wizyta':  { c:'vWizyta', bg:'vWizytaBg' },
+  'Szczepienie':      { c:'vSzczep', bg:'vSzczepBg' },
+  'Odrobaczanie':     { c:'vZabieg', bg:'vZabiegBg' },
+  'Zabieg':           { c:'vZabieg', bg:'vZabiegBg' },
+  'USG brzucha':      { c:'vDiag',   bg:'vDiagBg' },
+};
+const visitColor = (type, t) => {
+  const m = VISIT_COLOR[type] || { c:'vWizyta', bg:'vWizytaBg' };
+  return { color: t[m.c], bg: t[m.bg] };
+};
+
+const RAD = { icon:12, chip:10, card:16, hero:20 };
+
+const ThemeCtx = createContext(DARK);
+const useT = () => useContext(ThemeCtx);
+
+/* ════════════════════════════════════════
+   ICONS
+════════════════════════════════════════ */
+function IcHome({a,t})  { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><polyline points="9 21 9 13 15 13 15 21"/></svg>; }
+function IcSearch({a,t}){ return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>; }
+function IcPlus({a,t})  { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>; }
+function IcUser({a,t})  { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>; }
+function IcBack({t})    { return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={t.text} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>; }
+function IcCamera({t})  { return <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>; }
+function IcBell({a,t})  { return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>; }
+function IcDoc({t})     { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>; }
+function IcDown({t})    { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>; }
+function IcChev({t})    { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={t.muted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>; }
+function IcSettings({a,t}){ return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>; }
+function IcPhone({t})   { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>; }
+function IcMap({t})     { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>; }
+function IcSun({t})     { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>; }
+function IcMoon({t})    { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>; }
+
+/* ════════════════════════════════════════
+   LOGO SVG
+════════════════════════════════════════ */
+function VetLogo({ size = 34 }) {
+  const t = useT();
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      {/* Shield */}
+      <path d="M20 3L4 10v11c0 9 7 14 16 15 9-1 16-6 16-15V10L20 3Z"
+        fill={t.mint} opacity="0.18" stroke={t.mint} strokeWidth="1.5"/>
+      {/* Cross */}
+      <rect x="17.5" y="12" width="5" height="16" rx="2.5" fill={t.mint}/>
+      <rect x="12" y="17.5" width="16" height="5" rx="2.5" fill={t.mint}/>
+    </svg>
+  );
+}
+
+/* ════════════════════════════════════════
+   STATUS BAR
+════════════════════════════════════════ */
+function StatusBar() {
+  const t = useT();
+  return (
+    <div style={{ height:44, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 22px', flexShrink:0 }}>
+      <span style={{ fontSize:13, fontWeight:700, color:t.text, letterSpacing:0.3 }}>9:41</span>
+      <div style={{ display:'flex', gap:5, alignItems:'center' }}>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill={t.text}><rect x="0" y="3" width="2.5" height="8" rx="1"/><rect x="4" y="2" width="2.5" height="9" rx="1"/><rect x="8" y="0" width="2.5" height="11" rx="1"/><rect x="12" y="1" width="2.5" height="10" rx="1" opacity="0.3"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke={t.text} strokeOpacity="0.3"/><rect x="1.5" y="1.5" width="18" height="10" rx="2.5" fill={t.text}/><path d="M24 4.5V8.5C25 8 25.5 7 25.5 6.5S25 5 24 4.5Z" fill={t.text} fillOpacity="0.4"/></svg>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   BOTTOM NAV
+════════════════════════════════════════ */
+function IcPaw({a,t}) {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill={a?t.mint:t.muted}><ellipse cx="12" cy="17.5" rx="5" ry="3.8"/><ellipse cx="6.2" cy="13.5" rx="2.4" ry="3.2"/><ellipse cx="17.8" cy="13.5" rx="2.4" ry="3.2"/><ellipse cx="9" cy="8.2" rx="1.9" ry="2.9"/><ellipse cx="15" cy="8.2" rx="1.9" ry="2.9"/></svg>;
+}
+function IcCalendar({a,t}) {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+}
+function IcHistory({a,t}) {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><polyline points="12 7 12 12 16 14"/></svg>;
+}
+function IcGrid({a,t}) {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>;
+}
+function IcMore({a,t}) {
+  return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={a?t.mint:t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>;
+}
+function IcCreditCard({t}) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>;
+}
+function IcLogout({t}) {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={t.danger} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+}
+
+function BottomNav({ active, navigate, notifCount = 0, onLogout }) {
+  const t = useT();
+  const [showMore, setShowMore] = useState(false);
+
+  const tabs = [
+    { id:'home',               label:'Dom',      Ic: IcHome },
+    { id:'rejestracja_wizyta', label:'Umów',     Ic: IcCalendar },
+    { id:'zwierzeta',          label:'Zwierzaki',Ic: IcPaw },
+    { id:'historia',           label:'Wizyty',   Ic: IcHistory },
+    { id:'more',               label:'Więcej',   Ic: IcMore },
+  ];
+
+  const moreItems = [
+    { icon: <IcCreditCard t={t}/>, label:'Płatności',        sub:'Historia i metody płatności', action:()=>{ setShowMore(false); } },
+    { icon: <IcBell a={1} t={t}/>, label:'Powiadomienia',    sub:'Alerty i przypomnienia',       action:()=>{ setShowMore(false); navigate('powiadomienia'); },
+      badge: notifCount > 0 ? notifCount : null },
+    { icon: <IcSettings a={1} t={t}/>, label:'Ustawienia',   sub:'Motyw, język, hasło',          action:()=>{ setShowMore(false); navigate('ustawienia'); } },
+    { icon: <IcLogout t={t}/>,     label:'Wyloguj się',      sub:'Zakończ sesję',                action:()=>{ setShowMore(false); onLogout && onLogout(); }, danger:true },
+  ];
+
+  return (
+    <>
+      {/* More popup overlay */}
+      {showMore && (
+        <div onClick={() => setShowMore(false)}
+          style={{ position:'absolute', inset:0, zIndex:25, background:t.overlay, backdropFilter:'blur(4px)', borderRadius:10 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ position:'absolute', bottom:88, left:8, right:8, borderRadius:RAD.hero,
+              background:t.surface, border:`1px solid ${t.border}`,
+              boxShadow:t.navShadow, overflow:'hidden',
+              animation:'slideUpFade .22s cubic-bezier(0.22,1,0.36,1) both' }}>
+            {/* Handle */}
+            <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 4px' }}>
+              <div style={{ width:36, height:4, borderRadius:2, background:t.faint }} />
+            </div>
+            <div style={{ padding:'4px 0 8px' }}>
+              {moreItems.map((item, i) => (
+                <button key={i} className="tap" onClick={item.action}
+                  style={{ width:'100%', display:'flex', alignItems:'center', gap:14, padding:'13px 20px',
+                    borderBottom: i<moreItems.length-1 ? `1px solid ${t.faint}` : 'none',
+                    background:'transparent', textAlign:'left' }}>
+                  <div style={{ width:38, height:38, borderRadius:RAD.icon,
+                    background: item.danger ? t.dangerBg : t.mintGlow,
+                    display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, position:'relative' }}>
+                    {item.icon}
+                    {item.badge && (
+                      <div style={{ position:'absolute', top:-3, right:-3, minWidth:16, height:16, padding:'0 3px', borderRadius:8,
+                        background:t.danger, display:'flex', alignItems:'center', justifyContent:'center',
+                        border:`2px solid ${t.surface}` }}>
+                        <span style={{ fontSize:8, color:'#fff', fontWeight:700 }}>{item.badge}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color: item.danger ? t.danger : t.text }}>{item.label}</div>
+                    <div style={{ fontSize:11, color:t.muted, marginTop:1 }}>{item.sub}</div>
+                  </div>
+                  {!item.danger && <IcChev t={t} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Nav bar */}
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, height:80,
+        background:`linear-gradient(180deg, transparent 0%, ${t.bg} 35%)`,
+        display:'flex', alignItems:'flex-end', padding:'0 8px 16px', zIndex:20, pointerEvents:'none' }}>
+        <div style={{ width:'100%', background:t.surface, borderRadius:RAD.hero, border:`1px solid ${t.border}`,
+          display:'flex', padding:'8px 2px', pointerEvents:'all', boxShadow:t.navShadow }}>
+          {tabs.map(tab => {
+            const isActive = active === tab.id;
+            const isMoreOpen = tab.id==='more' && showMore;
+            const lit = isActive || isMoreOpen;
+            return (
+              <button key={tab.id}
+                onClick={() => {
+                  if(tab.id==='more') { setShowMore(s=>!s); return; }
+                  setShowMore(false);
+                  navigate(tab.id);
+                }}
+                style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+                  padding:'6px 2px', borderRadius:RAD.chip, position:'relative',
+                  background: isActive ? t.mintGlow : isMoreOpen ? t.faint : 'transparent', transition:'background .2s' }}>
+                <tab.Ic a={lit?1:0} t={t} />
+                <span style={{ fontSize:10, color:isActive?t.mint:lit?t.text:t.muted, fontWeight:lit?700:500, letterSpacing:0.2 }}>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ════════════════════════════════════════
+   ZWIERZĘTA SCREEN
+════════════════════════════════════════ */
+function ZwierzętaScreen({ navigate, pets, onLogout }) {
+  const t = useT();
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative' }}>
+      <StatusBar />
+      <div style={{ padding:'4px 20px 14px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <div>
+          <div style={{ fontSize:22, fontWeight:800, color:t.text }}>Zwierzaki</div>
+          <div style={{ fontSize:11, color:t.muted }}>{pets.length} pupili w profilu</div>
+        </div>
+        <button className="tap" onClick={() => navigate('dodaj')}
+          style={{ width:36, height:36, borderRadius:RAD.icon, background:t.mintGlow, border:`1px solid ${t.border}`,
+            display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <span style={{ fontSize:20, color:t.mint, lineHeight:1 }}>+</span>
+        </button>
+      </div>
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:100 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+          {pets.map((pet, idx) => (
+            <div key={pet.id} className="card-tap" onClick={() => navigate('karta', pet)}
+              style={{ borderRadius:RAD.card, overflow:'hidden', cursor:'pointer',
+                background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow,
+                transition:'transform .15s', animation:`fadeUp .4s ${idx*.07}s both` }}>
+              <div style={{ width:'100%', paddingTop:'88%', position:'relative', overflow:'hidden' }}>
+                <img src={pet.img} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} alt={pet.name} />
+                <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.75) 100%)' }} />
+                <div style={{ position:'absolute', bottom:10, left:12, right:8 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:'#fff' }}>{pet.name}</div>
+                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.65)' }}>{pet.species} · {pet.breed}</div>
+                </div>
+                <div style={{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,0.4)',
+                  backdropFilter:'blur(8px)', borderRadius:8, padding:'3px 7px', border:`1px solid rgba(255,255,255,0.15)` }}>
+                  <span style={{ fontSize:10, color:'#fff', fontWeight:600 }}>{petAge(pet.born)}</span>
+                </div>
+              </div>
+              <div style={{ padding:'10px 12px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div>
+                  <span style={{ fontSize:11, color:t.muted }}>{pet.weight} kg</span>
+                </div>
+                <IcChev t={t} />
+              </div>
+            </div>
+          ))}
+          <div className="card-tap" onClick={() => navigate('dodaj')}
+            style={{ borderRadius:RAD.card, border:`2px dashed ${t.border}`, aspectRatio:'1 / 1.28', alignSelf:'start',
+              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+              gap:8, cursor:'pointer', background:t.mintGlow }}>
+            <div style={{ width:48, height:48, borderRadius:'50%', background:t.card, border:`1px solid ${t.border}`,
+              display:'flex', alignItems:'center', justifyContent:'center', boxShadow:t.cardShadow }}>
+              <span style={{ fontSize:26, color:t.mint, lineHeight:1 }}>+</span>
+            </div>
+            <span style={{ fontSize:12, color:t.mint, fontWeight:700 }}>Dodaj zwierzę</span>
+          </div>
+        </div>
+      </div>
+      <BottomNav active="zwierzeta" navigate={navigate} onLogout={onLogout} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   SHARED COMPONENTS
+════════════════════════════════════════ */
+function GlassInput({ placeholder, value, onChange, type='text', icon }) {
+  const t = useT();
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{ position:'relative', borderRadius:RAD.card,
+      background: focused ? t.mintGlow : t.inputBg,
+      border:`1px solid ${focused ? t.mint : t.border}`, transition:'all .2s',
+      display:'flex', alignItems:'center' }}>
+      {icon && <div style={{ paddingLeft:14, opacity:0.6 }}>{icon}</div>}
+      <input value={value} onChange={onChange} type={type} placeholder={placeholder}
+        onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
+        style={{ flex:1, padding:'13px 16px', fontSize:15, color:t.text, fontFamily:'Plus Jakarta Sans' }} />
+    </div>
+  );
+}
+
+function PrimaryBtn({ children, onClick, disabled, icon }) {
+  const t = useT();
+  return (
+    <button className={disabled?undefined:'tap'} onClick={!disabled?onClick:undefined}
+      style={{ width:'100%', padding:'15px', borderRadius:RAD.hero,
+        background: disabled ? t.faint : `linear-gradient(135deg, ${t.mint} 0%, ${t.mintDim} 100%)`,
+        color: disabled ? t.muted : (t.onMint),
+        fontSize:15, fontWeight:700, letterSpacing:0.3, transition:'all .2s',
+        boxShadow: disabled ? 'none' : `0 8px 20px ${t.mintGlow}`,
+        display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+      {icon}{children}
+    </button>
+  );
+}
+
+function SectionLabel({ children }) {
+  const t = useT();
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
+      <span style={{ fontSize:11, fontWeight:700, color:t.muted, textTransform:'uppercase', letterSpacing:1 }}>{children}</span>
+      <div style={{ flex:1, height:1, background:t.faint }} />
+    </div>
+  );
+}
+
+function BackHeader({ onBack, title, subtitle, right }) {
+  const t = useT();
+  return (
+    <div style={{ display:'flex', alignItems:'center', padding:'4px 16px 14px', gap:12 }}>
+      <button className="tap" onClick={onBack}
+        style={{ width:36, height:36, borderRadius:RAD.icon, background:t.faint, border:`1px solid ${t.border}`,
+          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <IcBack t={t} />
+      </button>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:18, fontWeight:800, color:t.text }}>{title}</div>
+        {subtitle && <div style={{ fontSize:11, color:t.mint, fontWeight:600 }}>{subtitle}</div>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
+function Toggle({ value, onChange }) {
+  const t = useT();
+  return (
+    <button onClick={()=>onChange(!value)}
+      style={{ width:44, height:26, borderRadius:13, padding:3,
+        background: value ? t.mint : t.faint,
+        display:'flex', alignItems:'center', justifyContent:value?'flex-end':'flex-start',
+        transition:'all .25s', flexShrink:0 }}>
+      <div style={{ width:20, height:20, borderRadius:10, background:'#fff',
+        boxShadow:'0 1px 4px rgba(0,0,0,0.2)' }} />
+    </button>
+  );
+}
+
+/* ════════════════════════════════════════
+   DATA
+════════════════════════════════════════ */
+const INIT_PETS = [
+  { id:1, name:'Ozzy',    species:'Kot',  breed:'Brytyjski',    weight:'4.2',  born:'2023-02-14', img:'assets/pet_cat.jpg' },
+  { id:2, name:'Ryszard', species:'Pies', breed:'Golden Ret.',  weight:'28.5', born:'2021-05-01', img:'assets/pet_dog.jpg' },
+  { id:3, name:'Atos',    species:'Kot',  breed:'Dachowiec',    weight:'3.8',  born:'2024-01-10', img:'assets/pet_cat.jpg' },
+  { id:4, name:'Freddie', species:'Pies', breed:'Labrador',     weight:'30.1', born:'2019-07-22', img:'assets/pet_dog.jpg' },
+];
+
+function petAge(born) {
+  const d = new Date(born), now = new Date();
+  const y = now.getFullYear()-d.getFullYear(), m = now.getMonth()-d.getMonth();
+  const months = y*12+(m<0?m+12:m);
+  return months < 12 ? `${months} mies.` : `${Math.floor(months/12)} ${Math.floor(months/12)===1?'rok':Math.floor(months/12)<5?'lata':'lat'}`;
+}
+
+const WIZYTY_ZAR = [
+  { id:1, pet:'Ozzy',    date:'02.05.2026', time:'10:00', doctor:'dr Kowalska', type:'Szczepienie', emoji:'💉' },
+  { id:2, pet:'Ryszard', date:'26.04.2026', time:'9:30',  doctor:'dr Nowak',    type:'Badanie ogólne', emoji:'🩺' },
+];
+const HISTORIA_DAT = [
+  { id:1, date:'12.03.2026', pet:'Ozzy',    type:'Badanie ogólne', doctor:'dr Kowalska', emoji:'🩺', doc:'Wyniki_Ozzy_03-2026.pdf' },
+  { id:2, date:'01.11.2025', pet:'Ryszard', type:'Szczepienie',    doctor:'dr Nowak',    emoji:'💉', doc:'Karta_Ryszard_11-2025.pdf' },
+  { id:3, date:'15.06.2025', pet:'Atos',    type:'Odrobaczanie',   doctor:'dr Kowalska', emoji:'🐾', doc:null },
+  { id:4, date:'02.01.2025', pet:'Freddie', type:'Pierwsza wizyta',doctor:'dr Wiśniewska',emoji:'📋', doc:'Karta_Freddie_01-2025.pdf' },
+  { id:5, date:'10.09.2024', pet:'Ozzy',    type:'USG brzucha',    doctor:'dr Kowalska', emoji:'🔬', doc:'USG_Ozzy_09-2024.pdf' },
+];
+
+const NOTIFS_DATA = [
+  { id:1, grp:'today',   type:'warning', icon:'💉', title:'Szczepienie za 7 dni', desc:'Ozzy — wścieklizna, termin: 02.05.2026', pet:'Ozzy' },
+  { id:2, grp:'today',   type:'info',    icon:'📅', title:'Wizyta jutro 9:30',     desc:'Ryszard — badanie ogólne · VETMED Clinic', pet:'Ryszard' },
+  { id:3, grp:'week',    type:'warning', icon:'⚖️', title:'Kontrola wagi',         desc:'Freddie — zalecana wizyta kontrolna', pet:'Freddie' },
+  { id:4, grp:'week',    type:'info',    icon:'🔔', title:'Odrobaczanie za 2 tyg.', desc:'Atos — kolejna dawka', pet:'Atos' },
+  { id:5, grp:'older',   type:'success', icon:'✅', title:'Szczepienie wykonane',   desc:'Atos — panleukopenia — 01.11.2025', pet:'Atos' },
+];
+
+const DOCTORS = [
+  { id:1, name:'dr Anna Kowalska', spec:'Choroby wewnętrzne', avail:'Dziś, 10:00–16:00' },
+  { id:2, name:'dr Piotr Nowak',   spec:'Chirurgia',          avail:'Jutro, 8:00–14:00' },
+  { id:3, name:'dr Maria Wiśniewska', spec:'Dermatologia',   avail:'02.05, 9:00–13:00' },
+];
+
+const VISIT_TYPES = [
+  { id:'szczepienie', label:'Szczepienie', emoji:'💉' },
+  { id:'kontrola',    label:'Kontrola',    emoji:'🩺' },
+  { id:'zabieg',      label:'Zabieg',      emoji:'🔧' },
+  { id:'nagly',       label:'Nagły',       emoji:'🚨' },
+];
+
+const MONTHS_PL = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+const MON_SH = ['STY','LUT','MAR','KWI','MAJ','CZE','LIP','SIE','WRZ','PAŹ','LIS','GRU'];
+const WDAYS = ['Pn','Wt','Śr','Cz','Pt','Sb','Nd'];
+
+/* ════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════ */
+function LoginScreen({ navigate }) {
+  const t = useT();
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative' }}>
+      <div style={{ position:'absolute', top:-80, right:-60, width:260, height:260, borderRadius:'50%',
+        background:`radial-gradient(circle, ${t.mintGlow} 0%, transparent 70%)`, pointerEvents:'none' }} />
+      <StatusBar />
+      <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'16px 28px 0' }}>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, marginBottom:40, marginTop:8 }}>
+          <div style={{ width:100, height:100, borderRadius:26, background:t.card, border:`1.5px solid ${t.border}`,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            boxShadow:`0 16px 40px rgba(0,0,0,${t.mode==='dark'?0.4:0.1})` }}>
+            <VetLogo size={60} />
+          </div>
+          <div style={{ textAlign:'center' }}>
+            <div style={{ fontFamily:'Josefin Slab', fontWeight:700, fontSize:26, color:t.mint, letterSpacing:3 }}>VETMED</div>
+            <div style={{ fontSize:12, color:t.muted, marginTop:2 }}>Opieka nad Twoimi pupilami</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom:20 }}>
+          <h1 style={{ fontSize:28, fontWeight:800, color:t.text, lineHeight:1.2, marginBottom:6 }}>
+            Witaj z powrotem
+          </h1>
+          <p style={{ fontSize:13, color:t.muted }}>Zaloguj się, aby zarządzać zwierzętami</p>
+        </div>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:16 }}>
+          <GlassInput placeholder="Adres email" value={email} onChange={e=>setEmail(e.target.value)} type="email" />
+          <GlassInput placeholder="Hasło" value={pass} onChange={e=>setPass(e.target.value)} type="password" />
+        </div>
+
+        <div style={{ textAlign:'right', marginBottom:24 }}>
+          <button style={{ fontSize:12, color:t.mint, fontWeight:600 }}>Zapomniałem hasła</button>
+        </div>
+
+        <PrimaryBtn onClick={() => navigate('home')}>Zaloguj się</PrimaryBtn>
+
+        <div style={{ display:'flex', alignItems:'center', gap:12, margin:'20px 0' }}>
+          <div style={{ flex:1, height:1, background:t.faint }} />
+          <span style={{ fontSize:12, color:t.muted }}>lub</span>
+          <div style={{ flex:1, height:1, background:t.faint }} />
+        </div>
+
+        <button onClick={() => navigate('rejestracja_konto')}
+          style={{ width:'100%', padding:'14px', borderRadius:16, border:`1px solid ${t.border}`,
+            color:t.text, fontSize:15, fontWeight:600, background:t.faint }}>
+          Utwórz konto
+        </button>
+      </div>
+      <div style={{ height:32 }} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   REJESTRACJA KONTA
+════════════════════════════════════════ */
+function RejestracjaKontoScreen({ navigate }) {
+  const t = useT();
+  const [vals, setVals] = useState({ name:'', email:'', pass:'', pass2:'' });
+  const set = k => e => setVals(v=>({...v,[k]:e.target.value}));
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <BackHeader onBack={() => navigate('login')} title="Rejestracja" subtitle="Dołącz do VETMED" />
+      <div style={{ flex:1, overflowY:'auto', padding:'0 24px' }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:24 }}>
+          {[['name','Imię i nazwisko','text'],['email','Email','email'],['pass','Hasło','password'],['pass2','Powtórz hasło','password']].map(([k,p,tp]) => (
+            <GlassInput key={k} placeholder={p} value={vals[k]} onChange={set(k)} type={tp} />
+          ))}
+        </div>
+        <PrimaryBtn onClick={() => navigate('home')}>Zarejestruj się</PrimaryBtn>
+        <div style={{ height:32 }} />
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   HOME
+════════════════════════════════════════ */
+function HomeScreen({ navigate, pets, onLogout }) {
+  const t = useT();
+  const scrollRef = useRef();
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative' }}>
+      {/* Hero */}
+      <div style={{ position:'relative', height:200, flexShrink:0, overflow:'hidden' }}>
+        {/* Cat photo background */}
+        <img src="assets/pet_cat.jpg" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 20%' }} alt="" />
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.05) 42%, transparent 50%)' }} />
+        <div style={{ position:'absolute', left:0, right:0, bottom:0, height:'58%', background:`linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.85) 100%)` }} />
+        <div style={{ position:'absolute', left:0, right:0, bottom:0, height:24, background:`linear-gradient(180deg, transparent, ${t.bg})` }} />
+
+        {/* Status bar */}
+        <div style={{ position:'absolute', top:0, left:0, right:0 }}><StatusBar /></div>
+
+        {/* Logo + name — top left */}
+        <div style={{ position:'absolute', top:46, left:16, display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:38, height:38, borderRadius:RAD.icon, background:t.heroScrim, backdropFilter:'blur(12px)',
+            border:`1.5px solid ${t.heroBorder}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <VetLogo size={24} />
+          </div>
+          <div>
+            <div style={{ fontFamily:'Josefin Slab', fontWeight:700, fontSize:16, color:'#fff', letterSpacing:2, lineHeight:1, textShadow:'0 1px 6px rgba(0,0,0,0.5)' }}>VETMED</div>
+            <div style={{ fontSize:9, color:'rgba(255,255,255,0.75)', letterSpacing:0.5, textShadow:'0 1px 4px rgba(0,0,0,0.5)' }}>Przychodnia Weterynaryjna</div>
+          </div>
+        </div>
+
+        {/* Bell — top right */}
+        <div style={{ position:'absolute', top:46, right:16 }}>
+          <button onClick={() => navigate('powiadomienia')}
+            style={{ position:'relative', width:34, height:34, borderRadius:RAD.icon,
+              background:t.heroScrim, backdropFilter:'blur(12px)',
+              display:'flex', alignItems:'center', justifyContent:'center', border:`1px solid ${t.heroBorder}` }}>
+            <IcBell a={1} t={{mint:'#fff'}} />
+            <div style={{ position:'absolute', top:5, right:5, width:8, height:8, borderRadius:'50%', background:t.danger, border:`2px solid ${t.heroScrim}` }} />
+          </button>
+        </div>
+
+        {/* Bottom greeting */}
+        <div style={{ position:'absolute', bottom:12, left:16 }}>
+          <div style={{ fontSize:11, color:'rgba(255,255,255,0.7)', textShadow:'0 1px 4px rgba(0,0,0,0.5)' }}>Dzień dobry 👋</div>
+          <div style={{ fontSize:18, fontWeight:800, color:'#fff', textShadow:'0 1px 8px rgba(0,0,0,0.55)' }}>Jan Kowalski</div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ flex:1, overflowY:'auto', padding:'16px 16px 100px' }}>
+
+        {/* Pet carousel */}
+        <SectionLabel>Moje zwierzaki</SectionLabel>
+        <div ref={scrollRef} style={{ display:'flex', gap:12, overflowX:'auto', marginBottom:20, paddingBottom:4 }}>
+          {pets.map(pet => (
+            <div key={pet.id} className="card-tap" onClick={() => navigate('karta', pet)}
+              style={{ flexShrink:0, width:130, borderRadius:RAD.card, overflow:'hidden', cursor:'pointer',
+                background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow, transition:'transform .15s' }}>
+              <div style={{ width:'100%', height:100, position:'relative', overflow:'hidden' }}>
+                <img src={pet.img} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt={pet.name} />
+                <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg,transparent 50%,rgba(0,0,0,0.65) 100%)' }} />
+                <div style={{ position:'absolute', bottom:6, left:8 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:'#fff' }}>{pet.name}</div>
+                  <div style={{ fontSize:10, color:'rgba(255,255,255,0.65)' }}>{pet.species}</div>
+                </div>
+              </div>
+              <div style={{ padding:'8px 10px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ fontSize:10, color:t.muted }}>{petAge(pet.born)}</span>
+                <IcChev t={t} />
+              </div>
+            </div>
+          ))}
+          <div className="card-tap" onClick={() => navigate('dodaj')}
+            style={{ flexShrink:0, width:130, borderRadius:18, border:`1.5px dashed ${t.border}`,
+              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+              gap:6, padding:'16px 0', cursor:'pointer', background:'transparent' }}>
+            <span style={{ fontSize:24, color:t.mint }}>+</span>
+            <span style={{ fontSize:11, color:t.muted, fontWeight:600 }}>Dodaj</span>
+          </div>
+        </div>
+
+        {/* Clinic info shortcut */}
+        <button className="card-tap" onClick={() => navigate('przychodnia')}
+          style={{ width:'100%', marginBottom:20, borderRadius:RAD.card, padding:'14px 16px', boxShadow:t.cardShadow,
+            background:t.card, border:`1px solid ${t.border}`, display:'flex', alignItems:'center', gap:12, textAlign:'left' }}>
+          <div style={{ width:40, height:40, borderRadius:RAD.icon, background:t.mintGlow, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:20 }}>🏥</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:t.text }}>VETMED Bydgoszcz</div>
+            <div style={{ fontSize:11, color:t.muted }}>ul. Zwierzyniecka 12 · Pon–Pt 8–20</div>
+          </div>
+          <IcChev t={t} />
+        </button>
+
+        {/* Appointments */}
+        <SectionLabel>Zarezerwowane wizyty</SectionLabel>
+        <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:20 }}>
+          {WIZYTY_ZAR.map((w, i) => (
+            <div key={w.id} style={{ borderRadius:RAD.card, padding:'13px 14px',
+              background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow,
+              animation:`fadeUp .35s ${i*.06}s both` }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:46, height:50, borderRadius:12, flexShrink:0,
+                  background:`linear-gradient(135deg, ${t.mint}, ${t.mintDim})`,
+                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+                  <span style={{ fontSize:16, fontWeight:800, color:t.onMint, lineHeight:1 }}>{w.date.slice(0,2)}</span>
+                  <span style={{ fontSize:8, color:t.onMint, opacity:0.8, fontWeight:700 }}>{MON_SH[parseInt(w.date.slice(3,5))-1]}</span>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between' }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:t.text }}>{w.emoji} {w.type}</span>
+                    <span style={{ fontSize:12, color:t.mint, fontWeight:700 }}>{w.time}</span>
+                  </div>
+                  <div style={{ fontSize:11, color:t.muted, marginTop:2 }}>{w.pet} · {w.doctor}</div>
+                </div>
+              </div>
+              <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                <button className="tap" onClick={() => navigate('rejestracja_wizyta')}
+                  style={{ flex:1, padding:'7px', borderRadius:RAD.chip, background:t.faint, color:t.text, fontSize:11, fontWeight:600 }}>Zmień</button>
+                <button className="tap" style={{ flex:1, padding:'7px', borderRadius:RAD.chip, background:t.dangerBg, color:t.danger, fontSize:11, fontWeight:600 }}>Odwołaj</button>
+              </div>
+            </div>
+          ))}
+          <button onClick={() => navigate('rejestracja_wizyta')}
+            style={{ padding:'12px', borderRadius:14, border:`1px dashed ${t.border}`,
+              color:t.mint, fontSize:13, fontWeight:600, background:'transparent',
+              display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+            + Nowa wizyta
+          </button>
+        </div>
+
+        {/* History */}
+        <SectionLabel>Ostatnie wizyty</SectionLabel>
+        {HISTORIA_DAT.slice(0,3).map(h => {
+          const vc = visitColor(h.type, t);
+          return (
+          <div key={h.id} className="card-tap" onClick={() => navigate('historia')}
+            style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px',
+              borderRadius:RAD.card, background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow,
+              cursor:'pointer', marginBottom:8 }}>
+            <div style={{ width:36, height:36, borderRadius:RAD.icon, background:vc.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{h.emoji}</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13, fontWeight:600, color:t.text }}>{h.type}</div>
+              <div style={{ fontSize:11, color:t.muted }}>{h.pet} · {h.date}</div>
+            </div>
+            <IcChev t={t} />
+          </div>
+          );
+        })}
+        <button className="tap" onClick={() => navigate('historia')}
+          style={{ width:'100%', padding:'10px', borderRadius:RAD.chip, background:t.faint, color:t.mint, fontSize:12, fontWeight:600 }}>
+          Pełna historia →
+        </button>
+      </div>
+
+      <BottomNav active="home" navigate={navigate} notifCount={2} onLogout={onLogout} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   PRZYCHODNIA (clinic info)
+════════════════════════════════════════ */
+function PrzychowniaScreen({ navigate }) {
+  const t = useT();
+  const rows = [
+    { icon:'📍', label:'Adres',   value:'ul. Zwierzyniecka 12, Bydgoszcz' },
+    { icon:'🕐', label:'Pon–Pt',  value:'8:00 – 20:00' },
+    { icon:'🕐', label:'Sobota',  value:'9:00 – 14:00' },
+    { icon:'🔒', label:'Niedziela',value:'Nieczynne' },
+    { icon:'📞', label:'Telefon', value:'+48 52 345 67 89' },
+    { icon:'📧', label:'Email',   value:'kontakt@vetmed.pl' },
+  ];
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <BackHeader onBack={() => navigate('home')} title="Przychodnia" subtitle="VETMED Bydgoszcz" />
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:40 }}>
+        <div style={{ borderRadius:RAD.card, overflow:'hidden', background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow, marginBottom:16 }}>
+          {rows.map((r, i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
+              borderBottom: i<rows.length-1 ? `1px solid ${t.faint}` : 'none' }}>
+              <div style={{ width:32, height:32, borderRadius:RAD.icon, background:t.mintGlow, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0 }}>{r.icon}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:10, color:t.muted, fontWeight:700, letterSpacing:0.3 }}>{r.label}</div>
+                <div style={{ fontSize:13, color:t.text, fontWeight:500 }}>{r.value}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <a href="https://www.google.com/maps/search/Zwierzyniecka+12+Bydgoszcz" target="_blank" rel="noopener noreferrer" className="card-tap"
+          style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:RAD.card,
+            background:`linear-gradient(135deg, ${t.mintGlow}, transparent)`, boxShadow:t.cardShadow,
+            border:`1px solid ${t.border}` }}>
+          <div style={{ width:40, height:40, borderRadius:RAD.icon, background:t.mintGlow, border:`1px solid ${t.border}`,
+            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <IcMap t={t} />
+          </div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:14, fontWeight:700, color:t.mint }}>Otwórz w Google Maps</div>
+            <div style={{ fontSize:11, color:t.muted }}>Nawigacja krok po kroku</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.mint} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+        </a>
+        <div style={{ marginTop:16 }}>
+          <a href="tel:+48523456789" className="card-tap"
+            style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:RAD.card,
+              background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow }}>
+            <div style={{ width:40, height:40, borderRadius:RAD.icon, background:t.mintGlow, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <IcPhone t={t} />
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:14, fontWeight:700, color:t.mint }}>Zadzwoń teraz</div>
+              <div style={{ fontSize:11, color:t.muted }}>+48 52 345 67 89</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   SZUKAJ
+════════════════════════════════════════ */
+function SzukajScreen({ navigate, pets, onLogout }) {
+  const t = useT();
+  const [query, setQuery] = useState('');
+  const q = query.toLowerCase().trim();
+
+  const petResults = q ? pets.filter(p => p.name.toLowerCase().includes(q) || p.species.toLowerCase().includes(q) || p.breed.toLowerCase().includes(q)) : [];
+  const histResults = q ? HISTORIA_DAT.filter(h => h.type.toLowerCase().includes(q) || h.pet.toLowerCase().includes(q) || h.doctor.toLowerCase().includes(q)) : [];
+  const hasResults = petResults.length > 0 || histResults.length > 0;
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <div style={{ padding:'4px 16px 14px' }}>
+        <div style={{ fontSize:22, fontWeight:800, color:t.text, marginBottom:12 }}>Szukaj</div>
+        <GlassInput placeholder="Zwierzę, wizyta, lekarz..." value={query} onChange={e=>setQuery(e.target.value)}
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={t.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>}
+        />
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:100 }}>
+        {!q && (
+          <div style={{ textAlign:'center', padding:'40px 0' }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🔍</div>
+            <div style={{ color:t.text, fontSize:15, fontWeight:700, marginBottom:6 }}>Znajdź wszystko</div>
+            <div style={{ color:t.muted, fontSize:13 }}>Szukaj po imieniu zwierzęcia,<br />typie wizyty lub lekarzu</div>
+          </div>
+        )}
+
+        {q && !hasResults && (
+          <div style={{ textAlign:'center', padding:'40px 0' }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>😕</div>
+            <div style={{ color:t.text, fontSize:15, fontWeight:700, marginBottom:6 }}>Brak wyników</div>
+            <div style={{ color:t.muted, fontSize:13 }}>Spróbuj innego wyszukiwania</div>
+          </div>
+        )}
+
+        {petResults.length > 0 && (
+          <>
+            <SectionLabel>Zwierzaki ({petResults.length})</SectionLabel>
+            {petResults.map(p => (
+              <div key={p.id} className="card-tap" onClick={() => navigate('karta', p)}
+                style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
+                  borderRadius:RAD.card, background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow, marginBottom:8, cursor:'pointer', transition:'transform .15s' }}>
+                <div style={{ width:44, height:44, borderRadius:RAD.icon, overflow:'hidden', flexShrink:0 }}>
+                  <img src={p.img} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt="" />
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:14, fontWeight:700, color:t.text }}>{p.name}</div>
+                  <div style={{ fontSize:11, color:t.muted }}>{p.species} · {p.breed} · {petAge(p.born)}</div>
+                </div>
+                <IcChev t={t} />
+              </div>
+            ))}
+          </>
+        )}
+
+        {histResults.length > 0 && (
+          <>
+            <SectionLabel>Historia ({histResults.length})</SectionLabel>
+            {histResults.map(h => (
+              <div key={h.id} className="card-tap" onClick={() => navigate('historia')}
+                style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px',
+                  borderRadius:RAD.card, background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow, marginBottom:8, cursor:'pointer' }}>
+                <div style={{ width:36, height:36, borderRadius:RAD.icon, background:visitColor(h.type,t).bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{h.emoji}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:t.text }}>{h.type}</div>
+                  <div style={{ fontSize:11, color:t.muted }}>{h.pet} · {h.date} · {h.doctor}</div>
+                </div>
+                <IcChev t={t} />
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+      <BottomNav active="szukaj" navigate={navigate} onLogout={onLogout} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   PROFIL
+════════════════════════════════════════ */
+function ProfilScreen({ navigate, pets, onLogout }) {
+  const t = useT();
+  const sections = [
+    { label:'Moje zwierzaki', items: pets.map(p => ({ icon: p.species==='Kot'?'🐱':'🐶', label:p.name, sub:p.breed, action:() => navigate('karta', p) })) },
+    { label:'Ustawienia', items: [
+      { icon:'⚙️', label:'Ustawienia aplikacji', sub:'Motyw, powiadomienia, hasło', action:() => navigate('ustawienia') },
+      { icon:'🏥', label:'Informacje o przychodni', sub:'Godziny, adres, kontakt', action:() => navigate('przychodnia') },
+    ]},
+    { label:'Konto', items: [
+      { icon:'🚪', label:'Wyloguj się', sub:'', action: onLogout, danger: true },
+    ]},
+  ];
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <div style={{ padding:'4px 16px 16px' }}>
+        <div style={{ fontSize:22, fontWeight:800, color:t.text, marginBottom:14 }}>Profil</div>
+        {/* User card */}
+        <div style={{ borderRadius:RAD.hero, padding:'16px', background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow,
+          display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+          <div style={{ width:54, height:54, borderRadius:16, background:`linear-gradient(135deg, ${t.mint}, ${t.mintDim})`,
+            display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>
+            🧑‍⚕️
+          </div>
+          <div>
+            <div style={{ fontSize:16, fontWeight:800, color:t.text }}>Jan Kowalski</div>
+            <div style={{ fontSize:12, color:t.muted }}>jan.kowalski@email.pl</div>
+            <div style={{ fontSize:11, color:t.mint, fontWeight:600, marginTop:2 }}>{pets.length} zwierząt w profilu</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:100 }}>
+        {sections.map(sec => (
+          <div key={sec.label} style={{ marginBottom:20 }}>
+            <SectionLabel>{sec.label}</SectionLabel>
+            <div style={{ borderRadius:RAD.card, overflow:'hidden', background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow }}>
+              {sec.items.map((item, i) => (
+                <button key={i} className="tap" onClick={item.action}
+                  style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 16px', textAlign:'left',
+                    borderBottom: i<sec.items.length-1 ? `1px solid ${t.faint}` : 'none',
+                    background:'transparent' }}>
+                  <div style={{ width:34, height:34, borderRadius:RAD.icon, flexShrink:0, fontSize:17,
+                    background: item.danger ? t.dangerBg : t.mintGlow, display:'flex', alignItems:'center', justifyContent:'center' }}>{item.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color: item.danger ? t.danger : t.text }}>{item.label}</div>
+                    {item.sub && <div style={{ fontSize:11, color:t.muted }}>{item.sub}</div>}
+                  </div>
+                  {!item.danger && <IcChev t={t} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <BottomNav active="profil" navigate={navigate} onLogout={onLogout} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   USTAWIENIA
+════════════════════════════════════════ */
+function UstawieniaScreen({ navigate, darkMode, setDarkMode }) {
+  const t = useT();
+  const [notifWizyty, setNotifWizyty] = useState(true);
+  const [notifSzczep, setNotifSzczep] = useState(true);
+  const [notifRemind, setNotifRemind] = useState(false);
+  const [lang, setLang] = useState('pl');
+
+  const rows = [
+    {
+      label:'Wygląd', items:[
+        { label:'Tryb ciemny', sub:'Ciemne tło interfejsu', right: <Toggle value={darkMode} onChange={setDarkMode} /> },
+      ]
+    },
+    {
+      label:'Powiadomienia', items:[
+        { label:'Przypomnienia o wizytach', sub:'7 dni przed terminem', right: <Toggle value={notifWizyty} onChange={setNotifWizyty} /> },
+        { label:'Szczepienia', sub:'Alerty o nadchodzących szczepieniach', right: <Toggle value={notifSzczep} onChange={setNotifSzczep} /> },
+        { label:'Ogólne przypomnienia', sub:'Kontrole, odrobaczanie', right: <Toggle value={notifRemind} onChange={setNotifRemind} /> },
+      ]
+    },
+    {
+      label:'Język', items:[
+        { label:'Polski', right: <span style={{color:t.mint,fontWeight:700}}>{lang==='pl'?'✓':''}</span>, action:()=>setLang('pl') },
+        { label:'English', right: <span style={{color:t.mint,fontWeight:700}}>{lang==='en'?'✓':''}</span>, action:()=>setLang('en') },
+      ]
+    },
+    {
+      label:'Bezpieczeństwo', items:[
+        { label:'Zmień hasło', right: <IcChev t={t} />, action:()=>{} },
+        { label:'Uwierzytelnianie dwuskładnikowe', right: <Toggle value={false} onChange={()=>{}} /> },
+      ]
+    },
+  ];
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <BackHeader onBack={() => navigate('profil')} title="Ustawienia" />
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:40 }}>
+        {rows.map(sec => (
+          <div key={sec.label} style={{ marginBottom:18 }}>
+            <SectionLabel>{sec.label}</SectionLabel>
+            <div style={{ borderRadius:RAD.card, overflow:'hidden', background:t.card, border:`1px solid ${t.border}`, boxShadow:t.cardShadow }}>
+              {sec.items.map((item, i) => (
+                <div key={i} className={item.action ? 'tap' : undefined} onClick={item.action}
+                  style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px', cursor: item.action ? 'pointer' : 'default',
+                    borderBottom: i<sec.items.length-1 ? `1px solid ${t.faint}` : 'none' }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600, color:t.text }}>{item.label}</div>
+                    {item.sub && <div style={{ fontSize:11, color:t.muted, marginTop:1 }}>{item.sub}</div>}
+                  </div>
+                  {item.right}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div style={{ textAlign:'center', color:t.muted, fontSize:11, marginTop:8 }}>VETMED v3.0 · © 2026</div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   KARTA PACJENTA
+════════════════════════════════════════ */
+function KartaScreen({ navigate, pet, onLogout }) {
+  const t = useT();
+  const [tab, setTab] = useState('opis');
+  const p = pet || INIT_PETS[0];
+  const tabs = [{id:'opis',label:'Opis'},{id:'wizyty',label:'Wizyty'},{id:'szczepienia',label:'Szczepienia'}];
+  const info = {
+    opis: [
+      {icon:'🐾', label:'Gatunek', val:p.species},
+      {icon:'🏷️', label:'Rasa', val:p.breed},
+      {icon:'🎂', label:'Wiek', val:petAge(p.born)},
+      {icon:'⚖️', label:'Waga', val:`${p.weight} kg`},
+      {icon:'🩺', label:'Ostatnia wizyta', val:'12.03.2026'},
+    ],
+    wizyty: [['12.03.2026','Badanie ogólne'],['01.11.2025','Szczepienie'],['15.06.2025','Odrobaczanie'],['02.01.2025','Pierwsza wizyta']],
+    szczepienia: [['01.11.2025','Wścieklizna',true],['01.11.2025','FeLV',true],['01.11.2024','Panleukopenia',true],['01.11.2026','Panleukopenia',false]],
+  };
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden', position:'relative' }}>
+      <div style={{ position:'relative', height:240, flexShrink:0, overflow:'hidden' }}>
+        <img src={p.img} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt="" />
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 35%)' }} />
+        <div style={{ position:'absolute', left:0, right:0, bottom:0, height:'55%', background:'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.85) 100%)' }} />
+        <div style={{ position:'absolute', left:0, right:0, bottom:0, height:28, background:`linear-gradient(180deg, transparent, ${t.bg})` }} />
+        <div style={{ position:'absolute', top:0, left:0, right:0 }}><StatusBar /></div>
+        <div style={{ position:'absolute', top:46, left:16, right:16, display:'flex', justifyContent:'space-between' }}>
+          <button className="tap" onClick={() => navigate('home')}
+            style={{ width:36, height:36, borderRadius:RAD.icon, background:'rgba(0,0,0,0.4)', backdropFilter:'blur(12px)',
+              display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(255,255,255,0.2)' }}>
+            <IcBack t={{text:'#fff'}} />
+          </button>
+          <div style={{ background:'rgba(0,0,0,0.4)', backdropFilter:'blur(12px)', borderRadius:RAD.icon, padding:'6px 12px', border:'1px solid rgba(255,255,255,0.18)' }}>
+            <span style={{ fontSize:11, color:'#fff', fontWeight:700 }}>Karta pacjenta</span>
+          </div>
+        </div>
+        <div style={{ position:'absolute', bottom:14, left:20, right:20 }}>
+          <h2 style={{ fontSize:26, fontWeight:800, color:'#fff', lineHeight:1, textShadow:'0 2px 10px rgba(0,0,0,0.55)' }}>{p.name}</h2>
+          <div style={{ display:'flex', gap:8, marginTop:7 }}>
+            {[p.species, p.breed, petAge(p.born)].map(x => (
+              <span key={x} style={{ fontSize:11, color:'#fff', fontWeight:600, background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', borderRadius:RAD.chip, padding:'3px 9px', border:'1px solid rgba(255,255,255,0.15)' }}>{x}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:'flex', padding:'14px 16px 0', gap:8, flexShrink:0 }}>
+        {tabs.map(tb => (
+          <button key={tb.id} className="tap" onClick={() => setTab(tb.id)}
+            style={{ flex:1, padding:'9px 0', borderRadius:RAD.chip, fontSize:12, fontWeight:700,
+              background: tab===tb.id ? t.mint : t.faint,
+              color: tab===tb.id ? (t.onMint) : t.muted,
+              transition:'all .2s', boxShadow: tab===tb.id ? `0 4px 14px ${t.mintGlow}` : 'none' }}>
+            {tb.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'14px 16px 0' }}>
+        <div style={{ background:t.card, borderRadius:RAD.card, padding:'6px 16px', border:`1px solid ${t.border}`, boxShadow:t.cardShadow }}>
+          {tab === 'opis' ? info.opis.map((row, i) => (
+            <div key={row.label} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0', borderBottom: i<info.opis.length-1?`1px solid ${t.faint}`:'none' }}>
+              <div style={{ width:34, height:34, borderRadius:RAD.icon, background:t.mintGlow, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{row.icon}</div>
+              <span style={{ flex:1, fontSize:12, color:t.muted, fontWeight:600 }}>{row.label}</span>
+              <span style={{ fontSize:14, color:t.text, fontWeight:700 }}>{row.val}</span>
+            </div>
+          )) : info[tab].map((row, i) => {
+            const done = tab==='szczepienia' ? row[2] : true;
+            return (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0', borderBottom: i<info[tab].length-1?`1px solid ${t.faint}`:'none' }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background: done ? t.mint : t.muted, flexShrink:0, boxShadow: done?`0 0 0 4px ${t.mintGlow}`:'none' }} />
+              <span style={{ flex:1, fontSize:13, color:t.text, fontWeight:600 }}>{row[1]}{tab==='szczepienia' && !done && <span style={{ fontSize:11, color:t.mint, fontWeight:700 }}> · zaplanowane</span>}</span>
+              <span style={{ fontSize:12, color:t.muted, fontWeight:700 }}>{row[0]}</span>
+            </div>
+            );
+          })}
+        </div>
+
+        {tab==='opis' && (
+          <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:12, padding:'14px 16px',
+            borderRadius:RAD.card, background:t.vSzczepBg, border:`1px solid ${t.warnBorder}` }}>
+            <div style={{ width:38, height:38, borderRadius:RAD.icon, background:t.card, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0, boxShadow:t.cardShadow }}>💉</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:11, color:t.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.5 }}>Następne szczepienie</div>
+              <div style={{ fontSize:14, color:t.text, fontWeight:700 }}>Panleukopenia · 01.11.2026</div>
+            </div>
+            <span style={{ fontSize:11, color:t.vSzczep, fontWeight:700, background:t.card, borderRadius:RAD.chip, padding:'4px 9px' }}>za 5 mies.</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding:'14px 16px 90px' }}>
+        <PrimaryBtn onClick={() => navigate('rejestracja_wizyta', p)} icon={<span>📅</span>}>Umów wizytę</PrimaryBtn>
+      </div>
+      <BottomNav active="home" navigate={navigate} onLogout={onLogout} />
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   DODAJ ZWIERZĘ + SUCCESS
+════════════════════════════════════════ */
+function SuccessScreen({ petName, onContinue }) {
+  const t = useT();
+  const CONFETTI = Array.from({length:18},(_,i) => ({
+    x: 8+Math.random()*84, delay: Math.random()*.5, dur: 1.2+Math.random()*.8,
+    color:t.confetti[i%5],
+    size:6+Math.random()*8, rot:Math.random()*360,
+  }));
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg,
+      display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', position:'relative', overflow:'hidden' }}>
+      <div style={{ position:'absolute', width:280, height:280, borderRadius:'50%',
+        background:`radial-gradient(circle, ${t.mintGlow} 0%, transparent 70%)`, pointerEvents:'none' }} />
+      {[0,.3,.6].map((d,i) => (
+        <div key={i} style={{ position:'absolute', width:130, height:130, borderRadius:'50%',
+          border:`2px solid ${t.mint}`, opacity:0.3, animation:`ringPulse 2s ${d}s infinite ease-out` }} />
+      ))}
+      {CONFETTI.map((c,i) => (
+        <div key={i} style={{ position:'absolute', top:'-5%', left:`${c.x}%`,
+          width:c.size, height:c.size, borderRadius:i%3===0?'50%':i%3===1?'2px':'0',
+          background:c.color, transform:`rotate(${c.rot}deg)`,
+          animation:`confettiFall ${c.dur}s ${c.delay}s both ease-in` }} />
+      ))}
+      <div style={{ animation:'successPop 0.6s 0.1s both cubic-bezier(0.22,1,0.36,1)',
+        width:90, height:90, borderRadius:24, background:`linear-gradient(135deg, ${t.mint}, ${t.mintDim})`,
+        display:'flex', alignItems:'center', justifyContent:'center', marginBottom:24,
+        boxShadow:`0 0 40px ${t.mintGlow}` }}>
+        <svg width="46" height="46" viewBox="0 0 24 24" fill={t.onMint}>
+          <ellipse cx="12" cy="17.5" rx="5" ry="3.8"/><ellipse cx="6.2" cy="13.5" rx="2.4" ry="3.2"/>
+          <ellipse cx="17.8" cy="13.5" rx="2.4" ry="3.2"/><ellipse cx="9" cy="8.2" rx="1.9" ry="2.9"/>
+          <ellipse cx="15" cy="8.2" rx="1.9" ry="2.9"/>
+        </svg>
+      </div>
+      <div style={{ animation:'slideUpFade .5s .4s both', textAlign:'center', padding:'0 40px' }}>
+        <h2 style={{ fontSize:26, fontWeight:800, color:t.text, marginBottom:8 }}>
+          <span style={{color:t.mint}}>{petName}</span> dodany!
+        </h2>
+        <p style={{ fontSize:13, color:t.muted, lineHeight:1.7 }}>Twój pupil pojawił się w profilu VETMED</p>
+      </div>
+      <button onClick={onContinue}
+        style={{ animation:'slideUpFade .5s .6s both', marginTop:32, padding:'13px 40px',
+          borderRadius:16, background:`linear-gradient(135deg, ${t.mint}, ${t.mintDim})`,
+          color:t.onMint, fontSize:15, fontWeight:700,
+          boxShadow:`0 8px 24px ${t.mintGlow}` }}>
+        Przejdź do profilu
+      </button>
+    </div>
+  );
+}
+
+function DodajScreen({ navigate, onAddPet }) {
+  const t = useT();
+  const [name, setName] = useState('');
+  const [breed, setBreed] = useState('');
+  const [weight, setWeight] = useState('');
+  const [selectedSpecies, setSelectedSpecies] = useState('');
+  const [img, setImg] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const fileRef = useRef();
+
+  if (showSuccess) return <SuccessScreen petName={name} onContinue={() => navigate('home')} />;
+
+  const SPECIES_OPTIONS = [
+    { id:'Pies', emoji:'🐶' }, { id:'Kot', emoji:'🐱' },
+    { id:'Królik', emoji:'🐰' }, { id:'Ptak', emoji:'🦜' }, { id:'Inne', emoji:'🐾' }
+  ];
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <BackHeader onBack={() => navigate('home')} title="Nowe zwierzę" subtitle="Dodaj pupila do profilu" />
+      <div style={{ flex:1, overflowY:'auto', padding:'0 20px', paddingBottom:40 }}>
+        <div onClick={() => fileRef.current.click()}
+          style={{ width:'100%', height:160, borderRadius:20, overflow:'hidden', cursor:'pointer', marginBottom:20,
+            background: img ? 'transparent' : t.card, border:`2px dashed ${t.border}`,
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:8 }}>
+          {img ? <img src={img} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt="" />
+               : <><IcCamera t={t}/><span style={{ color:t.muted, fontSize:13, fontWeight:500 }}>Dodaj zdjęcie</span></>}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }}
+          onChange={e => { const f=e.target.files[0]; if(f) setImg(URL.createObjectURL(f)); }} />
+
+        <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:18 }}>
+          <GlassInput placeholder="Imię zwierzęcia" value={name} onChange={e=>setName(e.target.value)} />
+          <GlassInput placeholder="Rasa (np. Labrador)" value={breed} onChange={e=>setBreed(e.target.value)} />
+          <GlassInput placeholder="Waga (kg)" value={weight} onChange={e=>setWeight(e.target.value)} type="number" />
+        </div>
+
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontSize:11, color:t.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.7, marginBottom:10 }}>Gatunek</p>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+            {SPECIES_OPTIONS.map(s => {
+              const sel = selectedSpecies === s.id;
+              return (
+                <button key={s.id} onClick={() => setSelectedSpecies(s.id)}
+                  style={{ padding:'8px 14px', borderRadius:12, fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:6,
+                    background: sel ? t.mint : t.faint, color: sel ? (t.onMint) : t.muted,
+                    border:`1px solid ${sel ? t.mint : 'transparent'}`, transition:'all .15s' }}>
+                  <span>{s.emoji}</span>{s.id}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <PrimaryBtn
+          onClick={() => { if(name.trim()){ onAddPet({id:Date.now(),name:name.trim(),species:selectedSpecies||'Zwierzę',breed:breed||'—',weight:weight||'—',born:new Date().toISOString().slice(0,10),img:img||'assets/pet_cat.jpg'}); setShowSuccess(true); }}}
+          disabled={!name.trim() || !selectedSpecies}>
+          Dodaj do profilu
+        </PrimaryBtn>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   REJESTRACJA WIZYTY
+════════════════════════════════════════ */
+function MiniCalendar({ selected, onSelect }) {
+  const t = useT();
+  const [month, setMonth] = useState(3);
+  const year = 2026;
+  const firstDay = new Date(year, month, 1).getDay();
+  const offset = (firstDay+6)%7;
+  const dim = new Date(year, month+1, 0).getDate();
+  const cells = [];
+  for(let i=0; i<offset; i++) cells.push(null);
+  for(let d=1; d<=dim; d++) cells.push(d);
+  while(cells.length%7) cells.push(null);
+  const today = 25;
+  const isPast = d => d && month===3 && d<today;
+  const isSel  = d => d && selected?.month===month && selected?.day===d;
+  return (
+    <div style={{ background:t.card, borderRadius:16, overflow:'hidden', border:`1px solid ${t.border}` }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'11px 16px', borderBottom:`1px solid ${t.faint}` }}>
+        <button onClick={() => setMonth(m=>Math.max(3,m-1))} style={{ color:t.mint, fontSize:20, width:28 }}>‹</button>
+        <span style={{ color:t.text, fontWeight:700, fontSize:13 }}>{MONTHS_PL[month]} {year}</span>
+        <button onClick={() => setMonth(m=>Math.min(11,m+1))} style={{ color:t.mint, fontSize:20, width:28 }}>›</button>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'8px 8px 0' }}>
+        {WDAYS.map(d => <div key={d} style={{ textAlign:'center', fontSize:10, color:t.muted, fontWeight:700, padding:'4px 0' }}>{d}</div>)}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', padding:'4px 8px 10px', gap:2 }}>
+        {cells.map((d,i) => (
+          <button key={i} onClick={() => d && !isPast(d) && onSelect({month,day:d})}
+            style={{ aspectRatio:'1', borderRadius:'50%', fontSize:12, fontWeight:isSel(d)?700:400,
+              background: isSel(d) ? t.mint : 'transparent',
+              color: isSel(d) ? (t.onMint) : isPast(d) ? t.faint : t.text,
+              cursor: d && !isPast(d) ? 'pointer' : 'default',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow: isSel(d) ? `0 3px 10px ${t.mintGlow}` : 'none', transition:'all .15s' }}>
+            {d||''}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RejestracjaWizytaScreen({ navigate, pet }) {
+  const t = useT();
+  const [date, setDate] = useState(null);
+  const [time, setTime] = useState(null);
+  const [doctor, setDoctor] = useState(null);
+  const [visitType, setVisitType] = useState(null);
+  const [reason, setReason] = useState('');
+
+  // Simulate some slots as taken
+  const TAKEN = {'9:00':true,'10:30':true,'14:00':true};
+  const times = ['9:00','9:30','10:00','10:30','11:00','14:00','14:30','15:00','15:30','16:00'];
+  const canBook = date && time && doctor && visitType;
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <BackHeader onBack={() => navigate(pet?'karta':'home')} title="Umów wizytę" subtitle={pet ? `${pet.name} · ${pet.species}` : null} />
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:40 }}>
+
+        {/* Typ wizyty */}
+        <div style={{ marginBottom:16 }}>
+          <p style={{ fontSize:11, color:t.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, marginBottom:10 }}>Rodzaj wizyty</p>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+            {VISIT_TYPES.map(vt => {
+              const sel = visitType === vt.id;
+              return (
+                <button key={vt.id} className="tap" onClick={() => setVisitType(vt.id)}
+                  style={{ padding:'10px 12px', borderRadius:RAD.card, display:'flex', alignItems:'center', gap:8,
+                    background: sel ? t.mint : t.card, color: sel ? (t.onMint) : t.text,
+                    border:`1px solid ${sel ? t.mint : t.border}`, transition:'all .15s',
+                    boxShadow: sel ? `0 4px 14px ${t.mintGlow}` : t.cardShadow, fontWeight:700, fontSize:13 }}>
+                  <span style={{ fontSize:18 }}>{vt.emoji}</span>{vt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Lekarz */}
+        <div style={{ marginBottom:16 }}>
+          <p style={{ fontSize:11, color:t.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, marginBottom:10 }}>Wybierz lekarza</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {DOCTORS.map(doc => {
+              const sel = doctor?.id === doc.id;
+              return (
+                <button key={doc.id} className="card-tap" onClick={() => setDoctor(doc)}
+                  style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:RAD.card, textAlign:'left',
+                    background: sel ? t.mintGlow : t.card, border:`1px solid ${sel ? t.mint : t.border}`, boxShadow: sel?'none':t.cardShadow, transition:'all .15s' }}>
+                  <div style={{ width:40, height:40, borderRadius:RAD.icon, background:`linear-gradient(135deg, ${t.mint}, ${t.mintDim})`,
+                    display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>🩺</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:t.text }}>{doc.name}</div>
+                    <div style={{ fontSize:11, color:t.muted }}>{doc.spec}</div>
+                    <div style={{ fontSize:10, color:t.mint, fontWeight:600, marginTop:2 }}>📅 {doc.avail}</div>
+                  </div>
+                  {sel && <div style={{ width:20, height:20, borderRadius:'50%', background:t.mint, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <span style={{ fontSize:11, color:t.onMint, fontWeight:700 }}>✓</span>
+                  </div>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Kalendarz */}
+        <div style={{ marginBottom:16 }}>
+          <p style={{ fontSize:11, color:t.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, marginBottom:10 }}>Termin</p>
+          <MiniCalendar selected={date} onSelect={setDate} />
+        </div>
+
+        {/* Godziny */}
+        {date && (
+          <div style={{ marginBottom:16 }}>
+            <p style={{ fontSize:11, color:t.mint, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, marginBottom:10 }}>
+              {date.day}.{String(date.month+1).padStart(2,'0')}.2026 — Dostępne godziny
+            </p>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:8 }}>
+              {times.map(tm => {
+                const taken = TAKEN[tm];
+                const sel = time === tm;
+                return (
+                  <button key={tm} className={taken?undefined:'tap'} onClick={() => !taken && setTime(tm)}
+                    style={{ padding:'9px 0', borderRadius:RAD.chip, fontSize:12, fontWeight:700,
+                      background: taken ? t.faint : sel ? t.mint : t.card,
+                      color: taken ? t.muted : sel ? (t.onMint) : t.text,
+                      border:`1px solid ${taken?'transparent':sel?t.mint:t.border}`,
+                      cursor:taken?'not-allowed':'pointer', opacity:taken?.5:1,
+                      textDecoration:taken?'line-through':'none',
+                      transition:'all .15s', boxShadow: sel?`0 4px 12px ${t.mintGlow}`:'none' }}>
+                    {tm}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:8 }}>
+              <div style={{ width:10, height:10, borderRadius:2, background:t.faint }} />
+              <span style={{ fontSize:10, color:t.muted }}>Slot zajęty</span>
+            </div>
+          </div>
+        )}
+
+        {/* Opis */}
+        <div style={{ marginBottom:16 }}>
+          <p style={{ fontSize:11, color:t.muted, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, marginBottom:10 }}>Opis (opcjonalnie)</p>
+          <div style={{ background:t.inputBg, borderRadius:14, border:`1px solid ${t.border}`, overflow:'hidden' }}>
+            <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="Opisz objawy lub pytania..."
+              style={{ width:'100%', padding:'12px 16px', fontSize:14, color:t.text,
+                fontFamily:'Plus Jakarta Sans', resize:'none', minHeight:80, lineHeight:1.6, background:'transparent' }} />
+          </div>
+        </div>
+
+        {/* Summary */}
+        {canBook && (
+          <div style={{ background:t.card, borderRadius:14, padding:'13px 16px', marginBottom:14, border:`1px solid ${t.border}`, display:'flex', gap:12, alignItems:'center',
+            animation:'fadeUp .3s both' }}>
+            <div style={{ fontSize:22 }}>📅</div>
+            <div>
+              <div style={{ color:t.text, fontSize:13, fontWeight:700 }}>{date.day}.{String(date.month+1).padStart(2,'0')}.2026 o {time}</div>
+              <div style={{ color:t.muted, fontSize:11 }}>{doctor.name} · {VISIT_TYPES.find(x=>x.id===visitType)?.label}</div>
+            </div>
+          </div>
+        )}
+
+        <PrimaryBtn onClick={() => canBook && navigate('home')} disabled={!canBook}>
+          {canBook ? '✓ Zarezerwuj wizytę' : 'Uzupełnij wszystkie pola'}
+        </PrimaryBtn>
+        <div style={{ height:16 }} />
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   POWIADOMIENIA
+════════════════════════════════════════ */
+function PowiadomieniaScreen({ navigate }) {
+  const t = useT();
+  const [dismissed, setDismissed] = useState(new Set());
+  const visible = NOTIFS_DATA.filter(n => !dismissed.has(n.id));
+  const groups = [
+    { key:'today', label:'Dziś',       items: visible.filter(n=>n.grp==='today') },
+    { key:'week',  label:'Ten tydzień', items: visible.filter(n=>n.grp==='week') },
+    { key:'older', label:'Starsze',    items: visible.filter(n=>n.grp==='older') },
+  ].filter(g => g.items.length > 0);
+
+  const NC = { warning:t.warnBg, info:t.mintGlow, success:t.okBg };
+  const BC = { warning:t.warnBorder, info:t.border, success:t.okBorder };
+  const NCC = { warning:t.vSzczep, info:t.mint, success:t.vWizyta };
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <div style={{ display:'flex', alignItems:'center', padding:'4px 16px 14px', gap:12 }}>
+        <button className="tap" onClick={() => navigate('home')}
+          style={{ width:36, height:36, borderRadius:RAD.icon, background:t.faint, border:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <IcBack t={t} />
+        </button>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:22, fontWeight:800, color:t.text }}>Powiadomienia</div>
+          <div style={{ fontSize:11, color:t.muted }}>{visible.length} aktywnych</div>
+        </div>
+        {visible.length > 0 && (
+          <button className="tap" onClick={() => setDismissed(new Set(NOTIFS_DATA.map(n=>n.id)))}
+            style={{ fontSize:11, color:t.mint, fontWeight:700, padding:'5px 10px', border:`1px solid ${t.border}`, borderRadius:RAD.chip }}>
+            Wyczyść
+          </button>
+        )}
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:40 }}>
+        {visible.length === 0 && (
+          <div style={{ textAlign:'center', padding:'60px 0' }}>
+            <div style={{ fontSize:48, marginBottom:16 }}>🎉</div>
+            <div style={{ color:t.text, fontSize:15, fontWeight:700, marginBottom:6 }}>Wszystko pod kontrolą!</div>
+            <div style={{ color:t.muted, fontSize:13 }}>Brak nowych powiadomień</div>
+          </div>
+        )}
+        {groups.map(g => (
+          <div key={g.key} style={{ marginBottom:20 }}>
+            <SectionLabel>{g.label}</SectionLabel>
+            {g.items.map((n, i) => (
+              <div key={n.id} style={{ marginBottom:10, borderRadius:RAD.card, padding:'13px 14px',
+                background:NC[n.type], border:`1px solid ${BC[n.type]}`, borderLeft:`3px solid ${NCC[n.type]}`,
+                animation:`notifSlide .3s ${i*.05}s both` }}>
+                <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+                  <div style={{ width:34, height:34, borderRadius:RAD.icon, background:t.card, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0, boxShadow:t.cardShadow }}>{n.icon}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:700, color:t.text, marginBottom:2 }}>{n.title}</div>
+                    <div style={{ fontSize:12, color:t.muted, lineHeight:1.5 }}>{n.desc}</div>
+                    <div style={{ marginTop:8, display:'flex', gap:8 }}>
+                      <span style={{ fontSize:10, color:t.mint, background:t.mintGlow, borderRadius:RAD.chip, padding:'2px 8px', fontWeight:700 }}>{n.pet}</span>
+                    </div>
+                    {/* Inline actions for appointment notifs */}
+                    {(n.type==='warning'||n.type==='info') && (
+                      <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                        <button className="tap" onClick={() => navigate('przychodnia')}
+                          style={{ flex:1, padding:'7px', borderRadius:RAD.chip, background:t.mintGlow, border:`1px solid ${t.border}`,
+                            color:t.mint, fontSize:11, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
+                          <IcPhone t={t} /> Zadzwoń
+                        </button>
+                        <button className="tap" onClick={() => navigate('rejestracja_wizyta')}
+                          style={{ flex:1, padding:'7px', borderRadius:RAD.chip, background:t.faint, border:`1px solid ${t.border}`,
+                            color:t.text, fontSize:11, fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
+                          📅 Zmień termin
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => setDismissed(p=>new Set([...p,n.id]))}
+                    style={{ color:t.muted, fontSize:18, lineHeight:1, flexShrink:0 }}>×</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   HISTORIA LECZENIA
+════════════════════════════════════════ */
+function HistoriaScreen({ navigate }) {
+  const t = useT();
+  const [filterPet, setFilterPet] = useState('Wszystkie');
+  const pets = ['Wszystkie',...[...new Set(HISTORIA_DAT.map(h=>h.pet))]];
+  const filtered = HISTORIA_DAT.filter(h => filterPet==='Wszystkie' || h.pet===filterPet);
+
+  const showToast = doc => {
+    const el = document.createElement('div');
+    el.textContent = `📄 Pobieranie: ${doc}`;
+    Object.assign(el.style, { position:'fixed', bottom:'100px', left:'50%', transform:'translateX(-50%)',
+      background:t.card, color:t.mint, padding:'10px 20px', borderRadius:'12px', fontSize:'13px',
+      fontWeight:'700', border:`1px solid ${t.border}`, zIndex:9999,
+      fontFamily:'Plus Jakarta Sans', boxShadow:t.cardShadow,
+      animation:'slideUpFade 0.3s both', whiteSpace:'nowrap' });
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+  };
+
+  return (
+    <div style={{ width:'100%', height:'100%', background:t.bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+      <StatusBar />
+      <BackHeader onBack={() => navigate('home')} title="Historia leczenia"
+        subtitle={`${HISTORIA_DAT.length} wpisów · ${HISTORIA_DAT.filter(h=>h.doc).length} PDF`} />
+
+      <div style={{ display:'flex', gap:8, padding:'0 16px 12px', overflowX:'auto' }}>
+        {pets.map(p => (
+          <button key={p} className="tap" onClick={() => setFilterPet(p)}
+            style={{ padding:'6px 14px', borderRadius:20, fontSize:12, fontWeight:700, flexShrink:0,
+              background: filterPet===p ? t.mint : t.faint,
+              color: filterPet===p ? (t.onMint) : t.muted,
+              border: filterPet===p ? 'none' : `1px solid ${t.border}`,
+              transition:'all .15s' }}>
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ flex:1, overflowY:'auto', padding:'0 16px', paddingBottom:40 }}>
+        <div style={{ position:'relative' }}>
+          <div style={{ position:'absolute', left:20, top:0, bottom:0, width:2,
+            background:`linear-gradient(180deg, ${t.mint} 0%, transparent 100%)`, opacity:0.3 }} />
+          {filtered.map((h, i) => {
+            const vc = visitColor(h.type, t);
+            return (
+            <div key={h.id} style={{ display:'flex', gap:14, marginBottom:12, animation:`slideUpFade .4s ${i*.06}s both` }}>
+              <div style={{ flexShrink:0, width:42, display:'flex', justifyContent:'center', paddingTop:14 }}>
+                <div style={{ width:14, height:14, borderRadius:'50%', background:vc.color, border:`2px solid ${t.bg}`, zIndex:1, boxShadow:`0 0 0 3px ${vc.bg}` }} />
+              </div>
+              <div style={{ flex:1, background:t.card, borderRadius:RAD.card, padding:'13px', border:`1px solid ${t.border}`, boxShadow:t.cardShadow, borderLeft:`3px solid ${vc.color}` }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                  <span style={{ fontSize:13, fontWeight:700, color:t.text }}>{h.emoji} {h.type}</span>
+                  <span style={{ fontSize:11, color:t.muted, fontWeight:700 }}>{h.date}</span>
+                </div>
+                <div style={{ display:'flex', gap:6, marginBottom:h.doc?10:0, flexWrap:'wrap' }}>
+                  <span style={{ fontSize:10, color:vc.color, background:vc.bg, borderRadius:RAD.chip, padding:'2px 8px', fontWeight:700 }}>{h.type}</span>
+                  <span style={{ fontSize:10, color:t.mint, background:t.mintGlow, borderRadius:RAD.chip, padding:'2px 8px', fontWeight:700 }}>{h.pet}</span>
+                  <span style={{ fontSize:10, color:t.muted, background:t.faint, borderRadius:RAD.chip, padding:'2px 8px' }}>{h.doctor}</span>
+                </div>
+                {h.doc && (
+                  <button className="tap" onClick={() => showToast(h.doc)}
+                    style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 12px', borderRadius:RAD.chip,
+                      background:t.faint, border:`1px solid ${t.border}`, width:'100%', justifyContent:'space-between' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                      <IcDoc t={t} />
+                      <span style={{ fontSize:11, color:t.text, fontWeight:600 }}>{h.doc}</span>
+                    </div>
+                    <IcDown t={t} />
+                  </button>
+                )}
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   APP ROOT
+════════════════════════════════════════ */
+function App() {
+  const [darkMode, setDarkMode] = useState(() => (localStorage.getItem('vm_theme') ?? 'light') === 'dark');
+  const t = darkMode ? DARK : LIGHT;
+
+  const [screen, setScreen] = useState(() => localStorage.getItem('vm_screen') || 'login');
+  const [pet, setPet] = useState(null);
+  const [pets, setPets] = useState(INIT_PETS);
+  const [dir, setDir] = useState('right');
+  const [animKey, setAnimKey] = useState(0);
+
+  useEffect(() => {
+    document.body.className = darkMode ? 'dark' : 'light';
+    localStorage.setItem('vm_theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  const BACK_SCREENS = new Set(['login','rejestracja_konto']);
+  const TAB_SCREENS = new Set(['home','szukaj','zwierzeta','historia','profil']);
+
+  const navigate = (to, petData) => {
+    const goBack = BACK_SCREENS.has(to) || (TAB_SCREENS.has(to) && !BACK_SCREENS.has(screen));
+    setDir(goBack ? 'left' : 'right');
+    if(petData) setPet(petData);
+    setScreen(to);
+    setAnimKey(k=>k+1);
+    localStorage.setItem('vm_screen', to);
+  };
+
+  const onLogout = () => { setScreen('login'); setAnimKey(k=>k+1); localStorage.removeItem('vm_screen'); };
+
+  const screenMap = {
+    login:               <LoginScreen navigate={navigate} />,
+    rejestracja_konto:   <RejestracjaKontoScreen navigate={navigate} />,
+    home:                <HomeScreen navigate={navigate} pets={pets} onLogout={onLogout} />,
+    szukaj:              <SzukajScreen navigate={navigate} pets={pets} onLogout={onLogout} />,
+    zwierzeta:           <ZwierzętaScreen navigate={navigate} pets={pets} onLogout={onLogout} />,
+    profil:              <ProfilScreen navigate={navigate} pets={pets} onLogout={onLogout} />,
+    ustawienia:          <UstawieniaScreen navigate={navigate} darkMode={darkMode} setDarkMode={m => { setDarkMode(m); }} />,
+    karta:               <KartaScreen navigate={navigate} pet={pet} onLogout={onLogout} />,
+    dodaj:               <DodajScreen navigate={navigate} onAddPet={p => setPets(prev=>[...prev,p])} />,
+    rejestracja_wizyta:  <RejestracjaWizytaScreen navigate={navigate} pet={pet} />,
+    powiadomienia:       <PowiadomieniaScreen navigate={navigate} />,
+    historia:            <HistoriaScreen navigate={navigate} />,
+    przychodnia:         <PrzychowniaScreen navigate={navigate} />,
+  };
+
+  return (
+    <ThemeCtx.Provider value={t}>
+      <div style={{ width:'100%', height:'100%', overflow:'hidden', position:'relative',
+        background:t.bg, transition:'background .4s' }}>
+        <div key={animKey} className={dir==='left'?'enter-left':'enter-right'} style={{ width:'100%', height:'100%' }}>
+          {screenMap[screen] || screenMap.login}
+        </div>
+      </div>
+    </ThemeCtx.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

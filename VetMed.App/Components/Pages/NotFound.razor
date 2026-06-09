@@ -1,5 +1,45 @@
-﻿@page "/not-found"
+@page "/not-found"
 @layout MainLayout
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<div class="nf-page">
+    <div class="nf-emoji">&#x1F43E;</div>
+    <h3 class="nf-title">Nie znaleziono</h3>
+    <p class="nf-sub">Strona, której szukasz, nie istnieje.</p>
+    <a href="/" class="nf-btn">Wróć do strony głównej</a>
+</div>
+
+<style>
+    .nf-page {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 80px 24px;
+        gap: 10px;
+    }
+
+    .nf-emoji { font-size: 48px; }
+
+    .nf-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .nf-sub {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 8px;
+    }
+
+    .nf-btn {
+        background: var(--mint);
+        color: var(--onMint);
+        border-radius: 14px;
+        padding: 12px 24px;
+        font-weight: 700;
+        font-size: 14px;
+        text-decoration: none;
+    }
+</style>

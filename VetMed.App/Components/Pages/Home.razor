@@ -145,11 +145,11 @@
 
     private static string VisitColor(VetMed.Shared.Enums.VisitType t) => t switch
     {
-        VetMed.Shared.Enums.VisitType.Szczepienie => "#F5C842",
-        VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
-        VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
-        VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#3CB87A"
+        VetMed.Shared.Enums.VisitType.Szczepienie => "var(--vSzczep)",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "var(--vZabieg)",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "var(--vDiag)",
+        VetMed.Shared.Enums.VisitType.Nagly       => "var(--danger)",
+        _                                          => "var(--vWizyta)"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -191,12 +191,12 @@
     .greeting {
         font-size: 24px;
         font-weight: 800;
-        color: #1A2C22;
+        color: var(--text);
     }
 
     .greeting-sub {
         font-size: 13px;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
         margin-top: 3px;
     }
 
@@ -204,14 +204,14 @@
         width: 46px;
         height: 46px;
         border-radius: 50%;
-        background: rgba(60,184,122,0.2);
-        border: 2px solid rgba(60,184,122,0.4);
+        background: var(--mintGlow);
+        border: 2px solid var(--border);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 18px;
         font-weight: 700;
-        color: #3CB87A;
+        color: var(--mint);
         flex-shrink: 0;
     }
 
@@ -225,20 +225,20 @@
     .section-title {
         font-size: 16px;
         font-weight: 700;
-        color: #1A2C22;
+        color: var(--text);
     }
 
     .see-all {
         font-size: 13px;
-        color: #3CB87A;
+        color: var(--mint);
         text-decoration: none;
         font-weight: 600;
     }
 
     .btn-new-visit {
-        background: rgba(60,184,122,0.15);
-        border: 1px solid rgba(60,184,122,0.3);
-        color: #3CB87A;
+        background: var(--mintGlow);
+        border: 1px solid var(--border);
+        color: var(--mint);
         border-radius: 10px;
         padding: 6px 12px;
         font-size: 13px;
@@ -258,9 +258,9 @@
     .pets-scroll::-webkit-scrollbar { display: none; }
 
     .add-pet-card {
-        background: rgba(26,44,34,0.04);
-        border: 1px dashed rgba(60,184,122,0.3);
-        border-radius: 20px;
+        background: var(--faint);
+        border: 1px dashed var(--border);
+        border-radius: 16px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -277,24 +277,24 @@
 
     .add-pet-plus {
         font-size: 28px;
-        color: rgba(60,184,122,0.6);
+        color: var(--mint);
     }
 
     .add-pet-label {
         font-size: 12px;
-        color: rgba(26,44,34,0.4);
+        color: var(--muted);
     }
 
     .visit-card {
-        background: #FFFFFF;
-        border: 1px solid rgba(60,184,122,0.2);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 16px;
         padding: 14px 16px;
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 8px;
-        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
+        box-shadow: var(--cardShadow);
     }
 
     .visit-dot {
@@ -306,44 +306,44 @@
     }
 
     .visit-card-clickable { cursor: pointer; transition: border-color 0.2s, transform 0.12s; }
-    .visit-card-clickable:active { transform: scale(0.99); border-color: rgba(60,184,122,0.45); }
+    .visit-card-clickable:active { transform: scale(0.99); border-color: var(--mint); }
 
-    .visit-chevron { color: rgba(60,184,122,0.5); display: flex; flex-shrink: 0; }
+    .visit-chevron { color: var(--muted); display: flex; flex-shrink: 0; }
 
     .visit-info { flex: 1; }
 
     .visit-title {
         font-size: 14px;
         font-weight: 600;
-        color: #1A2C22;
+        color: var(--text);
     }
 
     .visit-meta {
         font-size: 12px;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
         margin-top: 2px;
     }
 
     .visit-badge {
         font-size: 11px;
         font-weight: 600;
-        color: #3CB87A;
-        background: rgba(60,184,122,0.12);
+        color: var(--mint);
+        background: var(--mintGlow);
         border-radius: 8px;
         padding: 3px 8px;
         white-space: nowrap;
     }
 
     .empty-card {
-        background: rgba(26,44,34,0.03);
-        border: 1px dashed rgba(60,184,122,0.2);
-        border-radius: 20px;
+        background: var(--faint);
+        border: 1px dashed var(--border);
+        border-radius: 16px;
         padding: 28px 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 10px;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
         font-size: 14px;
         text-align: center;
     }
@@ -352,8 +352,8 @@
     .empty-text { font-size: 14px; }
 
     .btn-primary-sm {
-        background: #3CB87A;
-        color: #F8FCF9;
+        background: var(--mint);
+        color: var(--onMint);
         border: none;
         border-radius: 12px;
         padding: 10px 22px;
@@ -369,7 +369,7 @@
 
     .muted-text {
         font-size: 13px;
-        color: rgba(26,44,34,0.35);
+        color: var(--muted);
         text-align: center;
         padding: 16px 0;
     }

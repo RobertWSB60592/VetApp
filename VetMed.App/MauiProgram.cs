@@ -33,6 +33,7 @@ public static class MauiProgram
             new ApiClient(new HttpClient { BaseAddress = new Uri(ApiBase) }));
 
         builder.Services.AddSingleton<AppState>();
+        builder.Services.AddSingleton<ThemeService>();
         builder.Services.AddTransient<IAuthApiService, AuthApiService>();
         builder.Services.AddTransient<IPetApiService, PetApiService>();
         builder.Services.AddTransient<IVisitApiService, VisitApiService>();

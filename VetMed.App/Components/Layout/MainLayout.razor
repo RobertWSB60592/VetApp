@@ -1,6 +1,8 @@
 @inherits LayoutComponentBase
 @inject AppState AppState
 @inject NavigationManager Nav
+@inject ThemeService Theme
+@inject IJSRuntime JS
 @implements IDisposable
 
 <div class="app-shell">
@@ -21,13 +23,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !AppState.IsAuthenticated)
+        if (firstRender)
         {
-            var restored = await AppState.TryRestoreAsync();
+            await Theme.InitializeAsync(JS);
+
             if (!AppState.IsAuthenticated)
-                Nav.NavigateTo("/login", replace: true);
-            else if (restored)
-                StateHasChanged();
+            {
+                var restored = await AppState.TryRestoreAsync();
+                if (!AppState.IsAuthenticated)
+                    Nav.NavigateTo("/login", replace: true);
+                else if (restored)
+                    StateHasChanged();
+            }
         }
     }
 
@@ -50,7 +57,8 @@
         flex-direction: column;
         height: 100dvh;
         width: 100%;
-        background: var(--bg);
+        background: var(--pageBg);
+        transition: background 0.4s;
     }
 
     .page-content {
