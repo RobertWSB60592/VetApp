@@ -12,6 +12,7 @@ public record ClinicVisitVm(
     VisitStatus Status,
     string? Notes,
     string? RejectionReason,
+    string? DoctorSummary,
     string PetName,
     string PetSpecies,
     string OwnerName,
@@ -61,6 +62,29 @@ public sealed class ClinicService
             return false;
 
         visit.Status = VisitStatus.Potwierdzona;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> CompleteAsync(int id, string? summary, CancellationToken ct = default)
+    {
+        var visit = await _db.Visits.FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (visit is null || visit.Status is not (VisitStatus.Potwierdzona or VisitStatus.Zaplanowana))
+            return false;
+
+        visit.Status = VisitStatus.Zakonczona;
+        visit.DoctorSummary = string.IsNullOrWhiteSpace(summary) ? null : summary.Trim();
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    public async Task<bool> UpdateSummaryAsync(int id, string? summary, CancellationToken ct = default)
+    {
+        var visit = await _db.Visits.FirstOrDefaultAsync(v => v.Id == id, ct);
+        if (visit is null || visit.Status != VisitStatus.Zakonczona)
+            return false;
+
+        visit.DoctorSummary = string.IsNullOrWhiteSpace(summary) ? null : summary.Trim();
         await _db.SaveChangesAsync(ct);
         return true;
     }
@@ -141,6 +165,7 @@ public sealed class ClinicService
             v.Status,
             v.Notes,
             v.RejectionReason,
+            v.DoctorSummary,
             v.Pet.Name,
             v.Pet.Species,
             v.Pet.Owner.FullName,

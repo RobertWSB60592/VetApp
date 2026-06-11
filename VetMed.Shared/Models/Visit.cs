@@ -11,6 +11,7 @@ public class Visit
     public VisitStatus Status { get; set; } = VisitStatus.Zaplanowana;
     public string? Notes { get; set; }
     public string? RejectionReason { get; set; }
+    public string? DoctorSummary { get; set; }
 
     public int PetId { get; set; }
     public Pet Pet { get; set; } = null!;

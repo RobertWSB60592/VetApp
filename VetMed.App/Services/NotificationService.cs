@@ -3,7 +3,7 @@ using VetMed.Shared.Enums;
 
 namespace VetMed.App.Services;
 
-public enum NotificationKind { Approved, Rejected, VaccineDue }
+public enum NotificationKind { Approved, Rejected, VaccineDue, Completed }
 
 public record NotificationItem(
     string Key,
@@ -46,12 +46,20 @@ public class NotificationService
         catch { upcoming = new(); }
 
         var sources = visits
-            .Where(v => v.Status is VisitStatus.Potwierdzona or VisitStatus.Odwolana)
+            .Where(v => v.Status is VisitStatus.Potwierdzona or VisitStatus.Odwolana
+                || (v.Status == VisitStatus.Zakonczona && !string.IsNullOrWhiteSpace(v.DoctorSummary)))
             .Select(v => new NotificationItem(
                 $"v{v.Id}:{(int)v.Status}",
                 v.Id, v.PetId,
-                v.Status == VisitStatus.Potwierdzona ? NotificationKind.Approved : NotificationKind.Rejected,
-                v.PetName, v.DoctorName, v.ScheduledAt, v.RejectionReason, false))
+                v.Status switch
+                {
+                    VisitStatus.Potwierdzona => NotificationKind.Approved,
+                    VisitStatus.Zakonczona   => NotificationKind.Completed,
+                    _                        => NotificationKind.Rejected
+                },
+                v.PetName, v.DoctorName, v.ScheduledAt,
+                v.Status == VisitStatus.Zakonczona ? v.DoctorSummary : v.RejectionReason,
+                false))
             .Concat(upcoming
                 .Where(u => u.NextDueOn is not null)
                 .Select(u => new NotificationItem(

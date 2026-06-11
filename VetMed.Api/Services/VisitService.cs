@@ -204,5 +204,5 @@ public sealed class VisitService : IVisitService
 
     private static VisitDto Map(Visit v) =>
         new(v.Id, v.ScheduledAt, v.Type, v.Status, v.Notes,
-            v.PetId, v.Pet.Name, v.DoctorId, v.Doctor.FullName, v.RejectionReason);
+            v.PetId, v.Pet.Name, v.DoctorId, v.Doctor.FullName, v.RejectionReason, v.DoctorSummary);
 }

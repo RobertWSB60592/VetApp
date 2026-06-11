@@ -48,6 +48,7 @@ else
                     <th>Lekarz</th>
                     <th>Typ</th>
                     <th>Status</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -71,8 +72,36 @@ else
                             {
                                 <div class="small text-muted mt-1">@v.RejectionReason</div>
                             }
+                            @if (v.Status == VisitStatus.Zakonczona && !string.IsNullOrWhiteSpace(v.DoctorSummary))
+                            {
+                                <div class="small text-muted mt-1">@v.DoctorSummary</div>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (v.Status is VisitStatus.Potwierdzona or VisitStatus.Zaplanowana)
+                            {
+                                <button class="btn btn-outline-success btn-sm" @onclick="() => OpenComplete(v)">Zakończ</button>
+                            }
+                            else if (v.Status == VisitStatus.Zakonczona)
+                            {
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenComplete(v)">Edytuj opis</button>
+                            }
                         </td>
                     </tr>
+                    @if (completingId == v.Id)
+                    {
+                        <tr>
+                            <td colspan="7" class="bg-light">
+                                <label class="form-label small mb-1">Opis przebiegu wizyty / zalecenia dla właściciela</label>
+                                <textarea class="form-control form-control-sm mb-2" rows="3" maxlength="2000" @bind="summaryText"
+                                          placeholder="np. Badanie ogólne bez zastrzeżeń. Zalecenia: ..."></textarea>
+                                <button class="btn btn-success btn-sm me-2" @onclick="() => SaveCompleteAsync(v)" disabled="@saving">
+                                    @(v.Status == VisitStatus.Zakonczona ? "Zapisz opis" : "Zakończ wizytę")
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => completingId = null" disabled="@saving">Anuluj</button>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -83,9 +112,34 @@ else
     private List<ClinicVisitVm> visits = new();
     private List<(int Id, string Name)> doctors = new();
     private bool loading = true;
+    private bool saving;
+    private int? completingId;
+    private string summaryText = "";
 
     private string statusFilter = "";
     private string doctorFilter = "";
+
+    private void OpenComplete(ClinicVisitVm v)
+    {
+        completingId = v.Id;
+        summaryText = v.DoctorSummary ?? "";
+    }
+
+    private async Task SaveCompleteAsync(ClinicVisitVm v)
+    {
+        saving = true;
+        var ok = v.Status == VisitStatus.Zakonczona
+            ? await Clinic.UpdateSummaryAsync(v.Id, summaryText)
+            : await Clinic.CompleteAsync(v.Id, summaryText);
+        saving = false;
+
+        if (ok)
+        {
+            completingId = null;
+            summaryText = "";
+            await LoadAsync();
+        }
+    }
 
     private static readonly VisitStatus[] statuses =
     {

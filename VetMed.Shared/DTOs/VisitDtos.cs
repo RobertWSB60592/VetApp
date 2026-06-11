@@ -12,7 +12,8 @@ public record VisitDto(
     string PetName,
     int DoctorId,
     string DoctorName,
-    string? RejectionReason = null);
+    string? RejectionReason = null,
+    string? DoctorSummary = null);
 
 public record CreateVisitDto(
     DateTime ScheduledAt,

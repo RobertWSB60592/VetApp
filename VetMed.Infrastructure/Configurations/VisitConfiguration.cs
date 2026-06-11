@@ -28,6 +28,9 @@ public class VisitConfiguration : IEntityTypeConfiguration<Visit>
         builder.Property(v => v.RejectionReason)
             .HasMaxLength(500);
 
+        builder.Property(v => v.DoctorSummary)
+            .HasMaxLength(2000);
+
         builder.HasOne(v => v.Pet)
             .WithMany(p => p.Visits)
             .HasForeignKey(v => v.PetId)

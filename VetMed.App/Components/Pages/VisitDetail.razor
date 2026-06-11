@@ -43,6 +43,19 @@
             }
         </div>
 
+        @if (visit.Status == VisitStatus.Zakonczona && !string.IsNullOrWhiteSpace(visit.DoctorSummary))
+        {
+            <div class="doctor-summary">
+                <div class="ds-head">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Opis lekarza / zalecenia</span>
+                </div>
+                <div class="ds-text">@visit.DoctorSummary</div>
+            </div>
+        }
+
         @if (visit.Status == VisitStatus.Odwolana)
         {
             <div class="cancel-reason">
@@ -336,6 +349,34 @@
     .badge-confirmed { background: var(--vDiagBg); color: var(--vDiag); }
     .badge-done      { background: var(--faint); color: var(--muted); }
     .badge-cancelled { background: var(--dangerBg);  color: var(--danger); }
+
+    .doctor-summary {
+        background: var(--okBg);
+        border: 1px solid var(--okBorder);
+        border-radius: 16px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+    }
+
+    .ds-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--mint);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 6px;
+    }
+
+    .ds-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text);
+        line-height: 1.45;
+        white-space: pre-line;
+    }
 
     .cancel-reason {
         background: var(--dangerBg);
