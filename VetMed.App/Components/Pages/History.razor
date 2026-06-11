@@ -12,6 +12,15 @@
     {
         <LoadingSpinner />
     }
+    else if (loadError)
+    {
+        <div class="load-error">
+            <span class="load-error-icon">&#x26A0;&#xFE0F;</span>
+            <span class="load-error-text">Nie udało się wczytać historii</span>
+            <span class="load-error-sub">Sprawdź połączenie i spróbuj ponownie.</span>
+            <button class="retry-btn" @onclick="LoadAsync">Ponów</button>
+        </div>
+    }
     else
     {
         <div class="filter-chips">
@@ -70,10 +79,14 @@
     private List<PetDto> pets = new();
     private int? selectedPetId;
     private bool loading = true;
+    private bool loadError;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
         loading = true;
+        loadError = false;
         try
         {
             var vTask = VisitApi.GetVisitsAsync();
@@ -82,7 +95,7 @@
             visits = vTask.Result.OrderByDescending(v => v.ScheduledAt).ToList();
             pets = pTask.Result;
         }
-        catch { }
+        catch { loadError = true; }
         finally { loading = false; }
     }
 

@@ -10,7 +10,14 @@
             <h1 class="greeting">Cześć, @FirstName!</h1>
             <p class="greeting-sub">Co słychać u twoich pupili?</p>
         </div>
-        <div class="avatar">@FirstName.Substring(0, 1)</div>
+        <div class="header-actions">
+            <button class="icon-btn" @onclick='() => Nav.NavigateTo("/search")' aria-label="Szukaj">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+            </button>
+            <button class="avatar" @onclick='() => Nav.NavigateTo("/profile")'>@FirstName.Substring(0, 1)</button>
+        </div>
     </div>
 
     <button class="clinic-card" @onclick='() => Nav.NavigateTo("/clinic")'>
@@ -32,6 +39,15 @@
     @if (loading)
     {
         <LoadingSpinner />
+    }
+    else if (loadError)
+    {
+        <div class="load-error">
+            <span class="load-error-icon">&#x26A0;&#xFE0F;</span>
+            <span class="load-error-text">Nie udało się wczytać danych</span>
+            <span class="load-error-sub">Sprawdź połączenie i spróbuj ponownie.</span>
+            <button class="retry-btn" @onclick="LoadAsync">Ponów</button>
+        </div>
     }
     else
     {
@@ -120,12 +136,16 @@
     private List<VisitDto> upcomingVisits = new();
     private List<VisitDto> recentVisits = new();
     private bool loading = true;
+    private bool loadError;
 
     private string FirstName => AppState.CurrentOwner?.FullName?.Split(' ')[0] ?? "Użytkowniku";
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
         loading = true;
+        loadError = false;
         try
         {
             var petTask = PetApi.GetPetsAsync();
@@ -150,7 +170,10 @@
                 .Take(3)
                 .ToList();
         }
-        catch { }
+        catch
+        {
+            loadError = true;
+        }
         finally
         {
             loading = false;
@@ -216,6 +239,29 @@
         margin-top: 3px;
     }
 
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .icon-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .icon-btn:active { background: var(--mintGlow); }
+
     .avatar {
         width: 46px;
         height: 46px;
@@ -229,6 +275,8 @@
         font-weight: 700;
         color: var(--mint);
         flex-shrink: 0;
+        cursor: pointer;
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
     .clinic-card {

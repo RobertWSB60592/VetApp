@@ -65,6 +65,20 @@
     <div class="more-overlay" @onclick="CloseMore"></div>
     <div class="more-popup">
         <div class="more-handle"></div>
+        <button class="more-item" @onclick='() => Go("/profile")'>
+            <span class="more-item-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+            </span>
+            <span class="more-item-text">
+                <span class="more-item-title">Profil</span>
+                <span class="more-item-sub">Twoje konto i zwierzaki</span>
+            </span>
+            <span class="more-item-chev">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+        </button>
         <button class="more-item" @onclick="CloseMore">
             <span class="more-item-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

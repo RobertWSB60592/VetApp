@@ -16,6 +16,15 @@
     {
         <LoadingSpinner />
     }
+    else if (loadError)
+    {
+        <div class="load-error">
+            <span class="load-error-icon">&#x26A0;&#xFE0F;</span>
+            <span class="load-error-text">Nie udało się wczytać zwierzaków</span>
+            <span class="load-error-sub">Sprawdź połączenie i spróbuj ponownie.</span>
+            <button class="retry-btn" @onclick="LoadAsync">Ponów</button>
+        </div>
+    }
     else
     {
         <div class="pets-grid">
@@ -76,13 +85,17 @@
 @code {
     private List<PetDto> pets = new();
     private bool loading = true;
+    private bool loadError;
     private int? pendingDeleteId;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
         loading = true;
+        loadError = false;
         try { pets = await PetApi.GetPetsAsync(); }
-        catch { }
+        catch { loadError = true; }
         finally { loading = false; }
     }
 

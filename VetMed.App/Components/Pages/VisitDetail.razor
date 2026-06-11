@@ -67,10 +67,23 @@
         {
             @if (!rescheduling)
             {
-                <div class="actions">
-                    <button class="btn-primary" @onclick="StartReschedule">Zmień termin</button>
-                    <button class="btn-danger" @onclick="CancelAsync" disabled="@busy">Odwołaj wizytę</button>
-                </div>
+                @if (confirmingCancel)
+                {
+                    <div class="confirm-box">
+                        <div class="confirm-text">Czy na pewno chcesz odwołać tę wizytę?</div>
+                        <div class="confirm-actions">
+                            <button class="btn-back-step" @onclick="() => confirmingCancel = false" disabled="@busy">Nie</button>
+                            <button class="btn-danger" @onclick="CancelAsync" disabled="@busy">@(busy ? "Odwoływanie..." : "Tak, odwołaj")</button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="actions">
+                        <button class="btn-primary" @onclick="StartReschedule">Zmień termin</button>
+                        <button class="btn-danger" @onclick="() => confirmingCancel = true">Odwołaj wizytę</button>
+                    </div>
+                }
             }
             else
             {
@@ -125,6 +138,7 @@
     private VisitDto? visit;
     private bool loading = true;
     private bool rescheduling;
+    private bool confirmingCancel;
     private bool busy;
     private bool slotsLoading;
     private string? error;
@@ -153,6 +167,7 @@
     {
         error = null;
         message = null;
+        confirmingCancel = false;
         newDate = visit!.ScheduledAt.Date;
         newTime = "";
         rescheduling = true;
@@ -195,6 +210,7 @@
     private async Task CancelAsync()
     {
         error = null;
+        confirmingCancel = false;
         busy = true;
         try
         {
@@ -349,6 +365,21 @@
     }
 
     .actions { display: flex; flex-direction: column; gap: 10px; }
+
+    .confirm-box {
+        background: var(--card);
+        border: 1px solid var(--danger);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .confirm-text { font-size: 14px; font-weight: 600; color: var(--text); text-align: center; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .confirm-actions .btn-back-step { flex: 1; text-align: center; }
+    .confirm-actions .btn-danger { flex: 1; }
 
     .btn-primary {
         background: var(--mint);
