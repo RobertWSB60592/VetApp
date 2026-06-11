@@ -77,6 +77,39 @@ public sealed class ClinicService
         return true;
     }
 
+    public async Task<List<(int Id, string Label)>> GetPetOptionsAsync(CancellationToken ct = default) =>
+        (await _db.Pets
+            .Where(p => !p.IsArchived)
+            .OrderBy(p => p.Name)
+            .Select(p => new { p.Id, p.Name, p.Species, Owner = p.Owner.FullName })
+            .ToListAsync(ct))
+        .Select(p => (p.Id, $"{p.Name} ({p.Species}) — {p.Owner}"))
+        .ToList();
+
+    public async Task<List<Vaccination>> GetVaccinationsAsync(int petId, CancellationToken ct = default) =>
+        await _db.Vaccinations
+            .Where(v => v.PetId == petId)
+            .OrderByDescending(v => v.AdministeredOn)
+            .ToListAsync(ct);
+
+    public async Task<List<Prescription>> GetPrescriptionsAsync(int petId, CancellationToken ct = default) =>
+        await _db.Prescriptions
+            .Where(p => p.PetId == petId)
+            .OrderByDescending(p => p.StartsOn)
+            .ToListAsync(ct);
+
+    public async Task AddVaccinationAsync(Vaccination vaccination, CancellationToken ct = default)
+    {
+        _db.Vaccinations.Add(vaccination);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task AddPrescriptionAsync(Prescription prescription, CancellationToken ct = default)
+    {
+        _db.Prescriptions.Add(prescription);
+        await _db.SaveChangesAsync(ct);
+    }
+
     public async Task<List<DoctorScheduleVm>> GetDoctorSchedulesAsync(CancellationToken ct = default) =>
         await _db.Doctors
             .OrderBy(d => d.FullName)

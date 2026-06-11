@@ -3,11 +3,12 @@ using VetMed.Shared.Enums;
 
 namespace VetMed.App.Services;
 
-public enum NotificationKind { Approved, Rejected }
+public enum NotificationKind { Approved, Rejected, VaccineDue }
 
 public record NotificationItem(
     string Key,
     int VisitId,
+    int PetId,
     NotificationKind Kind,
     string PetName,
     string DoctorName,
@@ -20,9 +21,14 @@ public class NotificationService
     private const string SeenKey = "seen_notifications";
 
     private readonly IVisitApiService _visits;
+    private readonly IHealthApiService _health;
     private HashSet<string>? _seen;
 
-    public NotificationService(IVisitApiService visits) => _visits = visits;
+    public NotificationService(IVisitApiService visits, IHealthApiService health)
+    {
+        _visits = visits;
+        _health = health;
+    }
 
     public List<NotificationItem> Items { get; private set; } = new();
     public int UnreadCount => Items.Count(i => !i.Read);
@@ -35,12 +41,26 @@ public class NotificationService
         try { visits = await _visits.GetVisitsAsync(); }
         catch { return; }
 
+        List<VaccinationDto> upcoming;
+        try { upcoming = await _health.GetUpcomingVaccinationsAsync(30); }
+        catch { upcoming = new(); }
+
         var sources = visits
             .Where(v => v.Status is VisitStatus.Potwierdzona or VisitStatus.Odwolana)
-            .Select(v => (
-                Key: $"v{v.Id}:{(int)v.Status}",
-                Visit: v,
-                Kind: v.Status == VisitStatus.Potwierdzona ? NotificationKind.Approved : NotificationKind.Rejected))
+            .Select(v => new NotificationItem(
+                $"v{v.Id}:{(int)v.Status}",
+                v.Id, v.PetId,
+                v.Status == VisitStatus.Potwierdzona ? NotificationKind.Approved : NotificationKind.Rejected,
+                v.PetName, v.DoctorName, v.ScheduledAt, v.RejectionReason, false))
+            .Concat(upcoming
+                .Where(u => u.NextDueOn is not null)
+                .Select(u => new NotificationItem(
+                    $"vac{u.Id}:{u.NextDueOn:yyyy-MM-dd}",
+                    0, u.PetId,
+                    NotificationKind.VaccineDue,
+                    u.PetName, u.Name,
+                    u.NextDueOn!.Value.ToDateTime(TimeOnly.MinValue),
+                    null, false)))
             .ToList();
 
         _seen ??= LoadSeen();
@@ -53,10 +73,8 @@ public class NotificationService
         }
 
         Items = sources
-            .OrderByDescending(s => s.Visit.ScheduledAt)
-            .Select(s => new NotificationItem(
-                s.Key, s.Visit.Id, s.Kind, s.Visit.PetName, s.Visit.DoctorName,
-                s.Visit.ScheduledAt, s.Visit.RejectionReason, _seen.Contains(s.Key)))
+            .OrderByDescending(s => s.ScheduledAt)
+            .Select(s => s with { Read = _seen.Contains(s.Key) })
             .ToList();
 
         OnChange?.Invoke();

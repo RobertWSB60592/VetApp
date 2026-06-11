@@ -1,6 +1,7 @@
 @page "/pets/{Id:int}"
 @inject IPetApiService PetApi
 @inject IVisitApiService VisitApi
+@inject IHealthApiService HealthApi
 @inject NavigationManager Nav
 
 <div class="pet-card-page">
@@ -46,6 +47,7 @@
             <button class="tab @(activeTab == 0 ? "tab-active" : "")" @onclick="() => activeTab = 0">Opis</button>
             <button class="tab @(activeTab == 1 ? "tab-active" : "")" @onclick="() => activeTab = 1">Wizyty</button>
             <button class="tab @(activeTab == 2 ? "tab-active" : "")" @onclick="() => activeTab = 2">Szczepienia</button>
+            <button class="tab @(activeTab == 3 ? "tab-active" : "")" @onclick="() => activeTab = 3">Leki</button>
         </div>
 
         <div class="tab-content">
@@ -137,31 +139,75 @@
                     }
                 }
             }
-            else
+            else if (activeTab == 2)
             {
-                @if (visitsLoading)
+                @if (healthLoading)
                 {
                     <LoadingSpinner />
                 }
+                else if (vaccinations.Count == 0)
+                {
+                    <p class="empty-msg">Brak szczepień.</p>
+                }
                 else
                 {
-                    var vaccines = petVisits.Where(v => v.Type == VetMed.Shared.Enums.VisitType.Szczepienie).ToList();
-                    @if (vaccines.Count == 0)
+                    @foreach (var v in vaccinations)
                     {
-                        <p class="empty-msg">Brak szczepień.</p>
-                    }
-                    else
-                    {
-                        @foreach (var v in vaccines)
-                        {
-                            <div class="visit-row" @key="v.Id">
-                                <div class="visit-dot" style="background:var(--vSzczep)"></div>
-                                <div class="visit-details">
-                                    <div class="visit-type">Szczepienie</div>
-                                    <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy") · @v.DoctorName</div>
-                                </div>
+                        <div class="visit-row" @key="v.Id">
+                            <div class="visit-dot" style="background:var(--vSzczep)"></div>
+                            <div class="visit-details">
+                                <div class="visit-type">@v.Name</div>
+                                <div class="visit-meta">Podano: @v.AdministeredOn.ToString("dd.MM.yyyy")</div>
+                                @if (!string.IsNullOrWhiteSpace(v.Notes))
+                                {
+                                    <div class="visit-meta">@v.Notes</div>
+                                }
                             </div>
-                        }
+                            @if (v.NextDueOn is not null)
+                            {
+                                <span class="due-badge @(DueSoon(v.NextDueOn.Value) ? "due-soon" : "")">
+                                    Następna: @v.NextDueOn.Value.ToString("dd.MM.yyyy")
+                                </span>
+                            }
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                @if (healthLoading)
+                {
+                    <LoadingSpinner />
+                }
+                else if (prescriptions.Count == 0)
+                {
+                    <p class="empty-msg">Brak leków.</p>
+                }
+                else
+                {
+                    @foreach (var p in prescriptions)
+                    {
+                        <div class="visit-row" @key="p.Id">
+                            <div class="visit-dot" style="background:var(--vZabieg)"></div>
+                            <div class="visit-details">
+                                <div class="visit-type">@p.Medication</div>
+                                @if (!string.IsNullOrWhiteSpace(p.Dosage))
+                                {
+                                    <div class="visit-meta">@p.Dosage</div>
+                                }
+                                <div class="visit-meta">
+                                    Od @p.StartsOn.ToString("dd.MM.yyyy")@(p.EndsOn is not null ? $" do {p.EndsOn.Value:dd.MM.yyyy}" : "")
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(p.Notes))
+                                {
+                                    <div class="visit-meta">@p.Notes</div>
+                                }
+                            </div>
+                            @if (IsActive(p))
+                            {
+                                <span class="status-badge">Aktywny</span>
+                            }
+                        </div>
                     }
                 }
             }
@@ -183,9 +229,12 @@
 
     private PetDto? pet;
     private List<VisitDto> petVisits = new();
+    private List<VaccinationDto> vaccinations = new();
+    private List<PrescriptionDto> prescriptions = new();
     private int activeTab;
     private bool loading = true;
     private bool visitsLoading = true;
+    private bool healthLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -198,6 +247,27 @@
         try { petVisits = (await VisitApi.GetVisitsByPetAsync(Id)).OrderByDescending(v => v.ScheduledAt).ToList(); }
         catch { }
         finally { visitsLoading = false; }
+
+        healthLoading = true;
+        try
+        {
+            var vTask = HealthApi.GetVaccinationsByPetAsync(Id);
+            var pTask = HealthApi.GetPrescriptionsByPetAsync(Id);
+            await Task.WhenAll(vTask, pTask);
+            vaccinations = vTask.Result;
+            prescriptions = pTask.Result;
+        }
+        catch { }
+        finally { healthLoading = false; }
+    }
+
+    private static bool DueSoon(DateOnly due) =>
+        due <= DateOnly.FromDateTime(DateTime.Today).AddDays(30);
+
+    private static bool IsActive(PrescriptionDto p)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        return p.StartsOn <= today && (p.EndsOn is null || p.EndsOn >= today);
     }
 
     private static string SexLabel(VetMed.Shared.Enums.PetSex s) => s switch
@@ -426,6 +496,22 @@
         border-radius: 8px;
         padding: 3px 8px;
         white-space: nowrap;
+    }
+
+    .due-badge {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--vSzczep);
+        background: var(--vSzczepBg);
+        border-radius: 8px;
+        padding: 3px 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .due-soon {
+        color: var(--danger);
+        background: var(--dangerBg);
     }
 
     .empty-msg {

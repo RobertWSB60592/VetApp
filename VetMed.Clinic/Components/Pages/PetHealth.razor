@@ -1,0 +1,241 @@
+@page "/health"
+@attribute [Authorize]
+@inject ClinicService Clinic
+@using VetMed.Shared.Models
+
+<PageTitle>Kartoteka zdrowia — VetMed Klinika</PageTitle>
+
+<h1 class="h3 mb-1">Kartoteka zdrowia</h1>
+<p class="text-muted mb-4">Szczepienia i leki pacjentów — wpisy są widoczne w aplikacji właściciela.</p>
+
+<div class="row g-2 mb-4">
+    <div class="col-md-6">
+        <select class="form-select" @bind="selectedPetId" @bind:after="LoadAsync">
+            <option value="0">— wybierz pacjenta —</option>
+            @foreach (var p in pets)
+            {
+                <option value="@p.Id">@p.Label</option>
+            }
+        </select>
+    </div>
+</div>
+
+@if (selectedPetId == 0)
+{
+    <div class="alert alert-light border">Wybierz pacjenta, aby zobaczyć i dodawać wpisy.</div>
+}
+else if (loading)
+{
+    <div class="spinner-border text-success" role="status"></div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Szczepienia</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-12">
+                            <input class="form-control form-control-sm" placeholder="Nazwa szczepionki *" @bind="vacName" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small mb-0">Data podania</label>
+                            <input type="date" class="form-control form-control-sm" @bind="vacAdministered" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small mb-0">Następna dawka</label>
+                            <input type="date" class="form-control form-control-sm" @bind="vacNextDue" />
+                        </div>
+                        <div class="col-12">
+                            <input class="form-control form-control-sm" placeholder="Uwagi" @bind="vacNotes" />
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-success btn-sm" @onclick="AddVaccinationAsync"
+                                    disabled="@(string.IsNullOrWhiteSpace(vacName) || saving)">
+                                Dodaj szczepienie
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (vaccinations.Count == 0)
+                    {
+                        <p class="text-muted small mb-0">Brak szczepień.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var v in vaccinations)
+                            {
+                                <li class="list-group-item px-0" @key="v.Id">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>@v.Name</strong>
+                                        <span class="text-nowrap small">@v.AdministeredOn.ToString("dd.MM.yyyy")</span>
+                                    </div>
+                                    @if (v.NextDueOn is not null)
+                                    {
+                                        <div class="small text-warning-emphasis">Następna dawka: @v.NextDueOn.Value.ToString("dd.MM.yyyy")</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(v.Notes))
+                                    {
+                                        <div class="small text-muted">@v.Notes</div>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header"><strong>Leki / recepty</strong></div>
+                <div class="card-body">
+                    <div class="row g-2 mb-3">
+                        <div class="col-12">
+                            <input class="form-control form-control-sm" placeholder="Nazwa leku *" @bind="rxMedication" />
+                        </div>
+                        <div class="col-12">
+                            <input class="form-control form-control-sm" placeholder="Dawkowanie (np. 1 tabletka 2× dziennie)" @bind="rxDosage" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small mb-0">Od</label>
+                            <input type="date" class="form-control form-control-sm" @bind="rxStarts" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small mb-0">Do (opcjonalnie)</label>
+                            <input type="date" class="form-control form-control-sm" @bind="rxEnds" />
+                        </div>
+                        <div class="col-12">
+                            <input class="form-control form-control-sm" placeholder="Uwagi" @bind="rxNotes" />
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-success btn-sm" @onclick="AddPrescriptionAsync"
+                                    disabled="@(string.IsNullOrWhiteSpace(rxMedication) || saving)">
+                                Dodaj lek
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (prescriptions.Count == 0)
+                    {
+                        <p class="text-muted small mb-0">Brak leków.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var p in prescriptions)
+                            {
+                                <li class="list-group-item px-0" @key="p.Id">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>@p.Medication</strong>
+                                        <span class="text-nowrap small">
+                                            @p.StartsOn.ToString("dd.MM.yyyy")@(p.EndsOn is not null ? $" – {p.EndsOn.Value:dd.MM.yyyy}" : "")
+                                        </span>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(p.Dosage))
+                                    {
+                                        <div class="small">@p.Dosage</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.Notes))
+                                    {
+                                        <div class="small text-muted">@p.Notes</div>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<(int Id, string Label)> pets = new();
+    private List<Vaccination> vaccinations = new();
+    private List<Prescription> prescriptions = new();
+    private int selectedPetId;
+    private bool loading;
+    private bool saving;
+
+    private string vacName = "";
+    private DateTime vacAdministered = DateTime.Today;
+    private DateTime? vacNextDue;
+    private string? vacNotes;
+
+    private string rxMedication = "";
+    private string? rxDosage;
+    private DateTime rxStarts = DateTime.Today;
+    private DateTime? rxEnds;
+    private string? rxNotes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        pets = await Clinic.GetPetOptionsAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (selectedPetId == 0)
+        {
+            vaccinations = new();
+            prescriptions = new();
+            return;
+        }
+
+        loading = true;
+        vaccinations = await Clinic.GetVaccinationsAsync(selectedPetId);
+        prescriptions = await Clinic.GetPrescriptionsAsync(selectedPetId);
+        loading = false;
+    }
+
+    private async Task AddVaccinationAsync()
+    {
+        if (selectedPetId == 0 || string.IsNullOrWhiteSpace(vacName))
+            return;
+
+        saving = true;
+        await Clinic.AddVaccinationAsync(new Vaccination
+        {
+            PetId = selectedPetId,
+            Name = vacName.Trim(),
+            AdministeredOn = DateOnly.FromDateTime(vacAdministered),
+            NextDueOn = vacNextDue is null ? null : DateOnly.FromDateTime(vacNextDue.Value),
+            Notes = string.IsNullOrWhiteSpace(vacNotes) ? null : vacNotes.Trim()
+        });
+
+        vacName = "";
+        vacNextDue = null;
+        vacNotes = null;
+        saving = false;
+        await LoadAsync();
+    }
+
+    private async Task AddPrescriptionAsync()
+    {
+        if (selectedPetId == 0 || string.IsNullOrWhiteSpace(rxMedication))
+            return;
+
+        saving = true;
+        await Clinic.AddPrescriptionAsync(new Prescription
+        {
+            PetId = selectedPetId,
+            Medication = rxMedication.Trim(),
+            Dosage = string.IsNullOrWhiteSpace(rxDosage) ? null : rxDosage.Trim(),
+            StartsOn = DateOnly.FromDateTime(rxStarts),
+            EndsOn = rxEnds is null ? null : DateOnly.FromDateTime(rxEnds.Value),
+            Notes = string.IsNullOrWhiteSpace(rxNotes) ? null : rxNotes.Trim()
+        });
+
+        rxMedication = "";
+        rxDosage = null;
+        rxEnds = null;
+        rxNotes = null;
+        saving = false;
+        await LoadAsync();
+    }
+}

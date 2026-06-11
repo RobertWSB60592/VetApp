@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<Doctor> Doctors => Set<Doctor>();
     public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
     public DbSet<Visit> Visits => Set<Visit>();
+    public DbSet<Vaccination> Vaccinations => Set<Vaccination>();
+    public DbSet<Prescription> Prescriptions => Set<Prescription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

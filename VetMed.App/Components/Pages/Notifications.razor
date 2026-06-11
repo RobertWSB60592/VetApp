@@ -79,27 +79,42 @@
     private void Open(NotificationItem n)
     {
         Notif.MarkRead(n.Key);
-        Nav.NavigateTo($"/visits/{n.VisitId}");
+        if (n.Kind == NotificationKind.VaccineDue)
+            Nav.NavigateTo($"/pets/{n.PetId}");
+        else
+            Nav.NavigateTo($"/visits/{n.VisitId}");
     }
 
     public void Dispose() => Notif.OnChange -= OnNotifChanged;
 
     private RenderFragment NotifCard(NotificationItem n) =>
         @<div class="notif-card @(n.Read ? "" : "notif-unread")" @onclick="() => Open(n)" @key="n.Key">
-            <div class="notif-icon @(n.Kind == NotificationKind.Approved ? "ic-ok" : "ic-bad")">
+            <div class="notif-icon @IconClass(n.Kind)">
                 @if (n.Kind == NotificationKind.Approved)
                 {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 }
-                else
+                else if (n.Kind == NotificationKind.Rejected)
                 {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 }
+                else
+                {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                }
             </div>
             <div class="notif-body">
-                <div class="notif-title">@(n.Kind == NotificationKind.Approved ? "Wizyta potwierdzona" : "Wizyta odwołana")</div>
-                <div class="notif-meta">@n.PetName · @n.ScheduledAt.ToString("dd.MM.yyyy, HH:mm")</div>
-                <div class="notif-doctor">@n.DoctorName</div>
+                <div class="notif-title">@Title(n.Kind)</div>
+                @if (n.Kind == NotificationKind.VaccineDue)
+                {
+                    <div class="notif-meta">@n.PetName · termin: @n.ScheduledAt.ToString("dd.MM.yyyy")</div>
+                    <div class="notif-doctor">@n.DoctorName</div>
+                }
+                else
+                {
+                    <div class="notif-meta">@n.PetName · @n.ScheduledAt.ToString("dd.MM.yyyy, HH:mm")</div>
+                    <div class="notif-doctor">@n.DoctorName</div>
+                }
                 @if (n.Kind == NotificationKind.Rejected && !string.IsNullOrWhiteSpace(n.Reason))
                 {
                     <div class="notif-reason"><span class="nr-label">Powód:</span> @n.Reason</div>
@@ -110,6 +125,20 @@
                 <span class="unread-dot"></span>
             }
         </div>;
+
+    private static string IconClass(NotificationKind k) => k switch
+    {
+        NotificationKind.Approved   => "ic-ok",
+        NotificationKind.Rejected   => "ic-bad",
+        _                           => "ic-due"
+    };
+
+    private static string Title(NotificationKind k) => k switch
+    {
+        NotificationKind.Approved   => "Wizyta potwierdzona",
+        NotificationKind.Rejected   => "Wizyta odwołana",
+        _                           => "Zbliża się szczepienie"
+    };
 }
 
 <style>
@@ -198,6 +227,7 @@
 
     .ic-ok { background: var(--okBg); color: var(--mint); }
     .ic-bad { background: var(--dangerBg); color: var(--danger); }
+    .ic-due { background: var(--vSzczepBg); color: var(--vSzczep); }
 
     .notif-body { flex: 1; min-width: 0; }
 

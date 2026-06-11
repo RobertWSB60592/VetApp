@@ -39,6 +39,7 @@ public static class MauiProgram
         builder.Services.AddTransient<IPetApiService, PetApiService>();
         builder.Services.AddTransient<IVisitApiService, VisitApiService>();
         builder.Services.AddTransient<IDoctorApiService, DoctorApiService>();
+        builder.Services.AddTransient<IHealthApiService, HealthApiService>();
 
         var app = builder.Build();
         var appState = app.Services.GetRequiredService<AppState>();
