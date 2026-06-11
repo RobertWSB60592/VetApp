@@ -51,6 +51,12 @@
                                 <span class="tl-time">@v.ScheduledAt.ToString("HH:mm")</span>
                                 <span class="status-badge @StatusClass(v.Status)">@StatusLabel(v.Status)</span>
                             </div>
+                            @if (v.Status == VisitStatus.Odwolana && !string.IsNullOrWhiteSpace(v.RejectionReason))
+                            {
+                                <div class="tl-reason">
+                                    <span class="tl-reason-label">Powód odwołania:</span> @v.RejectionReason
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -262,6 +268,19 @@
         border-radius: 8px;
         padding: 3px 9px;
     }
+
+    .tl-reason {
+        margin-top: 10px;
+        padding: 8px 10px;
+        background: var(--dangerBg);
+        border: 1px solid var(--danger);
+        border-radius: 10px;
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .tl-reason-label { color: var(--danger); font-weight: 700; }
 
     .badge-planned   { background: var(--mintGlow); color: var(--mint); }
     .badge-confirmed { background: var(--vDiagBg); color: var(--vDiag); }

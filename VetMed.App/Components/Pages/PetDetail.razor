@@ -155,7 +155,7 @@
                         @foreach (var v in vaccines)
                         {
                             <div class="visit-row" @key="v.Id">
-                                <div class="visit-dot" style="background:#F5C842"></div>
+                                <div class="visit-dot" style="background:var(--vSzczep)"></div>
                                 <div class="visit-details">
                                     <div class="visit-type">Szczepienie</div>
                                     <div class="visit-meta">@v.ScheduledAt.ToString("dd MMM yyyy") · @v.DoctorName</div>
@@ -195,7 +195,7 @@
         finally { loading = false; }
 
         visitsLoading = true;
-        try { petVisits = await VisitApi.GetVisitsByPetAsync(Id); }
+        try { petVisits = (await VisitApi.GetVisitsByPetAsync(Id)).OrderByDescending(v => v.ScheduledAt).ToList(); }
         catch { }
         finally { visitsLoading = false; }
     }
@@ -219,11 +219,11 @@
 
     private static string VisitColor(VetMed.Shared.Enums.VisitType t) => t switch
     {
-        VetMed.Shared.Enums.VisitType.Szczepienie => "#F5C842",
-        VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
-        VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
-        VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#3CB87A"
+        VetMed.Shared.Enums.VisitType.Szczepienie => "var(--vSzczep)",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "var(--vZabieg)",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "var(--vDiag)",
+        VetMed.Shared.Enums.VisitType.Nagly       => "var(--danger)",
+        _                                          => "var(--vWizyta)"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -254,7 +254,7 @@
     }
 
     .hero {
-        background: linear-gradient(180deg, rgba(60,184,122,0.12) 0%, transparent 100%);
+        background: linear-gradient(180deg, var(--mintGlow) 0%, transparent 100%);
         padding: 20px 20px 28px;
         display: flex;
         flex-direction: column;
@@ -266,10 +266,10 @@
         position: absolute;
         left: 16px;
         top: 20px;
-        background: rgba(26,44,34,0.08);
-        border: 1px solid rgba(60,184,122,0.2);
+        background: var(--inputBg);
+        border: 1px solid var(--border);
         border-radius: 12px;
-        color: #1A2C22;
+        color: var(--text);
         width: 38px;
         height: 38px;
         cursor: pointer;
@@ -279,7 +279,7 @@
         transition: background 0.2s;
     }
 
-    .back-btn:hover { background: rgba(60,184,122,0.1); }
+    .back-btn:hover { background: var(--mintGlow); }
 
     .hero-emoji { font-size: 72px; line-height: 1; margin-bottom: 14px; }
 
@@ -289,13 +289,13 @@
         border-radius: 50%;
         object-fit: cover;
         margin-bottom: 14px;
-        border: 3px solid rgba(60,184,122,0.3);
+        border: 3px solid var(--border);
     }
 
     .hero-name {
         font-size: 28px;
         font-weight: 800;
-        color: #1A2C22;
+        color: var(--text);
         margin-bottom: 12px;
     }
 
@@ -307,33 +307,33 @@
     }
 
     .hero-tag {
-        background: rgba(26,44,34,0.09);
+        background: var(--faint);
         border-radius: 10px;
         padding: 5px 13px;
         font-size: 12px;
-        color: rgba(26,44,34,0.75);
+        color: var(--textSub);
         font-weight: 600;
     }
 
     .hero-tag-mint {
-        background: rgba(60,184,122,0.15);
-        color: #3CB87A;
+        background: var(--mintGlow);
+        color: var(--mint);
     }
 
     .tabs-bar {
         display: flex;
-        background: rgba(26,44,34,0.04);
+        background: var(--faint);
         margin: 0 16px;
         border-radius: 14px;
         padding: 4px;
-        border: 1px solid rgba(60,184,122,0.15);
+        border: 1px solid var(--border);
     }
 
     .tab {
         flex: 1;
         background: transparent;
         border: none;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
         font-size: 13px;
         font-weight: 600;
         font-family: 'Plus Jakarta Sans', sans-serif;
@@ -344,8 +344,8 @@
     }
 
     .tab-active {
-        background: rgba(60,184,122,0.2);
-        color: #3CB87A;
+        background: var(--mintGlow);
+        color: var(--mint);
     }
 
     .tab-content {
@@ -354,11 +354,11 @@
     }
 
     .info-card {
-        background: #FFFFFF;
-        border: 1px solid rgba(60,184,122,0.2);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 20px;
         padding: 4px 0;
-        box-shadow: 0 8px 24px rgba(26,44,34,0.08);
+        box-shadow: var(--cardShadow);
     }
 
     .info-row {
@@ -366,34 +366,34 @@
         justify-content: space-between;
         align-items: center;
         padding: 13px 18px;
-        border-bottom: 1px solid rgba(26,44,34,0.05);
+        border-bottom: 1px solid var(--faint);
     }
 
     .info-row:last-child { border-bottom: none; }
 
     .info-label {
         font-size: 14px;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
     }
 
     .info-value {
         font-size: 14px;
         font-weight: 600;
-        color: #1A2C22;
+        color: var(--text);
     }
 
-    .info-value-mint { color: #3CB87A; }
+    .info-value-mint { color: var(--mint); }
 
     .visit-row {
         display: flex;
         align-items: center;
         gap: 12px;
-        background: #FFFFFF;
-        border: 1px solid rgba(60,184,122,0.15);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 14px;
         padding: 12px 14px;
         margin-bottom: 8px;
-        box-shadow: 0 4px 12px rgba(26,44,34,0.05);
+        box-shadow: var(--cardShadow);
     }
 
     .visit-dot {
@@ -409,20 +409,20 @@
     .visit-type {
         font-size: 14px;
         font-weight: 600;
-        color: #1A2C22;
+        color: var(--text);
     }
 
     .visit-meta {
         font-size: 12px;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
         margin-top: 2px;
     }
 
     .status-badge {
         font-size: 11px;
         font-weight: 600;
-        color: #3CB87A;
-        background: rgba(60,184,122,0.12);
+        color: var(--mint);
+        background: var(--mintGlow);
         border-radius: 8px;
         padding: 3px 8px;
         white-space: nowrap;
@@ -430,7 +430,7 @@
 
     .empty-msg {
         text-align: center;
-        color: rgba(26,44,34,0.35);
+        color: var(--muted);
         font-size: 14px;
         padding: 40px 0;
     }
@@ -442,9 +442,9 @@
     }
 
     .btn-secondary {
-        background: rgba(60,184,122,0.1);
-        color: #3CB87A;
-        border: 1px solid rgba(60,184,122,0.3);
+        background: var(--mintGlow);
+        color: var(--mint);
+        border: 1px solid var(--border);
         border-radius: 16px;
         padding: 15px 20px;
         font-weight: 700;
@@ -459,8 +459,8 @@
 
     .btn-primary {
         flex: 1;
-        background: #3CB87A;
-        color: #F8FCF9;
+        background: var(--mint);
+        color: var(--onMint);
         border: none;
         border-radius: 16px;
         padding: 15px;
@@ -480,15 +480,15 @@
         align-items: center;
         gap: 16px;
         padding: 80px 20px;
-        color: rgba(26,44,34,0.45);
+        color: var(--muted);
     }
 
     .not-found-text { font-size: 16px; }
 
     .btn-back-sm {
-        background: rgba(60,184,122,0.15);
-        border: 1px solid rgba(60,184,122,0.3);
-        color: #3CB87A;
+        background: var(--mintGlow);
+        border: 1px solid var(--border);
+        color: var(--mint);
         border-radius: 12px;
         padding: 10px 24px;
         font-size: 14px;

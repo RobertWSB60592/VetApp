@@ -1,5 +1,6 @@
 @inject NavigationManager Nav
 @inject AppState AppState
+@inject NotificationService Notif
 @implements IDisposable
 
 <div class="nav-wrapper">
@@ -49,6 +50,10 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>
                 </svg>
+                @if (Notif.UnreadCount > 0)
+                {
+                    <span class="nav-badge">@(Notif.UnreadCount > 9 ? "9+" : Notif.UnreadCount.ToString())</span>
+                }
             </span>
             <span class="nav-label">Więcej</span>
         </button>
@@ -75,16 +80,20 @@
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </span>
         </button>
-        <button class="more-item" @onclick='() => Go("/history")'>
+        <button class="more-item" @onclick='() => Go("/notifications")'>
             <span class="more-item-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
+                @if (Notif.UnreadCount > 0)
+                {
+                    <span class="item-badge">@(Notif.UnreadCount > 9 ? "9+" : Notif.UnreadCount.ToString())</span>
+                }
             </span>
             <span class="more-item-text">
                 <span class="more-item-title">Powiadomienia</span>
-                <span class="more-item-sub">Alerty i przypomnienia</span>
+                <span class="more-item-sub">@(Notif.UnreadCount > 0 ? $"{Notif.UnreadCount} nieprzeczytane" : "Alerty i przypomnienia")</span>
             </span>
             <span class="more-item-chev">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -127,7 +136,12 @@
     protected override void OnInitialized()
     {
         Nav.LocationChanged += OnLocationChanged;
+        Notif.OnChange += OnNotifChanged;
     }
+
+    protected override async Task OnInitializedAsync() => await Notif.RefreshAsync();
+
+    private void OnNotifChanged() => InvokeAsync(StateHasChanged);
 
     private void ToggleMore() => moreOpen = !moreOpen;
     private void CloseMore() => moreOpen = false;
@@ -148,9 +162,14 @@
     {
         moreOpen = false;
         InvokeAsync(StateHasChanged);
+        _ = Notif.RefreshAsync();
     }
 
-    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        Notif.OnChange -= OnNotifChanged;
+    }
 }
 
 <style>
@@ -207,6 +226,45 @@
         font-weight: 500;
         letter-spacing: 0.2px;
     }
+
+    .nav-icon { position: relative; }
+
+    .nav-badge {
+        position: absolute;
+        top: -5px;
+        right: -7px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 8px;
+        background: var(--danger);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 16px;
+        text-align: center;
+        border: 2px solid var(--surface);
+        box-sizing: content-box;
+    }
+
+    .item-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 4px;
+        border-radius: 8px;
+        background: var(--danger);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        line-height: 16px;
+        text-align: center;
+        border: 2px solid var(--surface);
+    }
+
+    .more-item-icon { position: relative; }
 
     .more-overlay {
         position: fixed;

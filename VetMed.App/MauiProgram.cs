@@ -34,6 +34,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<AppState>();
         builder.Services.AddSingleton<ThemeService>();
+        builder.Services.AddSingleton<NotificationService>();
         builder.Services.AddTransient<IAuthApiService, AuthApiService>();
         builder.Services.AddTransient<IPetApiService, PetApiService>();
         builder.Services.AddTransient<IVisitApiService, VisitApiService>();

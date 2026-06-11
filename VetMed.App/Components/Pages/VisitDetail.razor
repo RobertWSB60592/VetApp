@@ -43,6 +43,21 @@
             }
         </div>
 
+        @if (visit.Status == VisitStatus.Odwolana)
+        {
+            <div class="cancel-reason">
+                <div class="cr-head">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>Powód odwołania</span>
+                </div>
+                <div class="cr-text">
+                    @(string.IsNullOrWhiteSpace(visit.RejectionReason) ? "Nie podano powodu odwołania." : visit.RejectionReason)
+                </div>
+            </div>
+        }
+
         @if (!string.IsNullOrEmpty(message))
         {
             <div class="toast">@message</div>
@@ -198,11 +213,11 @@
 
     private static string VisitColor(VisitType t) => t switch
     {
-        VisitType.Szczepienie => "#F5C842",
-        VisitType.Zabieg      => "#F06292",
-        VisitType.Diagnostyka => "#64B5F6",
-        VisitType.Nagly       => "#EF5350",
-        _                     => "#E8906A"
+        VisitType.Szczepienie => "var(--vSzczep)",
+        VisitType.Zabieg      => "var(--vZabieg)",
+        VisitType.Diagnostyka => "var(--vDiag)",
+        VisitType.Nagly       => "var(--danger)",
+        _                     => "var(--vWizyta)"
     };
 
     private static string VisitLabel(VisitType t) => t switch
@@ -248,10 +263,10 @@
     .back-btn {
         width: 40px;
         height: 40px;
-        background: rgba(245,237,229,0.07);
-        border: 1px solid rgba(232,144,106,0.2);
+        background: var(--inputBg);
+        border: 1px solid var(--border);
         border-radius: 12px;
-        color: #F5EDE5;
+        color: var(--text);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -259,14 +274,14 @@
         flex-shrink: 0;
     }
 
-    .page-title { font-size: 20px; font-weight: 800; color: #F5EDE5; }
+    .page-title { font-size: 20px; font-weight: 800; color: var(--text); }
 
     .detail-card {
-        background: #352010;
-        border: 1px solid rgba(232,144,106,0.2);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 20px;
         padding: 6px 0;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        box-shadow: var(--cardShadow);
         margin-bottom: 18px;
     }
 
@@ -275,7 +290,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 16px 18px;
-        border-bottom: 1px solid rgba(245,237,229,0.06);
+        border-bottom: 1px solid var(--faint);
     }
 
     .hero-type { font-size: 18px; font-weight: 800; }
@@ -285,14 +300,14 @@
         justify-content: space-between;
         gap: 16px;
         padding: 13px 18px;
-        border-bottom: 1px solid rgba(245,237,229,0.05);
+        border-bottom: 1px solid var(--faint);
     }
 
     .detail-row:last-child { border-bottom: none; }
     .notes-row .d-value { text-align: right; }
 
-    .d-label { font-size: 13px; color: rgba(245,237,229,0.45); }
-    .d-value { font-size: 14px; font-weight: 600; color: #F5EDE5; }
+    .d-label { font-size: 13px; color: var(--muted); }
+    .d-value { font-size: 14px; font-weight: 600; color: var(--text); }
 
     .status-badge {
         font-size: 11px;
@@ -301,16 +316,43 @@
         padding: 3px 9px;
     }
 
-    .badge-planned   { background: rgba(232,144,106,0.12); color: #E8906A; }
-    .badge-confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
-    .badge-done      { background: rgba(245,237,229,0.08); color: rgba(245,237,229,0.5); }
-    .badge-cancelled { background: rgba(239,83,80,0.12);  color: #EF5350; }
+    .badge-planned   { background: var(--mintGlow); color: var(--mint); }
+    .badge-confirmed { background: var(--vDiagBg); color: var(--vDiag); }
+    .badge-done      { background: var(--faint); color: var(--muted); }
+    .badge-cancelled { background: var(--dangerBg);  color: var(--danger); }
+
+    .cancel-reason {
+        background: var(--dangerBg);
+        border: 1px solid var(--danger);
+        border-radius: 16px;
+        padding: 14px 16px;
+        margin-bottom: 18px;
+    }
+
+    .cr-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--danger);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 6px;
+    }
+
+    .cr-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text);
+        line-height: 1.45;
+    }
 
     .actions { display: flex; flex-direction: column; gap: 10px; }
 
     .btn-primary {
-        background: #E8906A;
-        color: #2A1808;
+        background: var(--mint);
+        color: var(--onMint);
         border: none;
         border-radius: 14px;
         padding: 14px;
@@ -324,9 +366,9 @@
     .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .btn-danger {
-        background: rgba(239,83,80,0.12);
-        color: #EF5350;
-        border: 1px solid rgba(239,83,80,0.3);
+        background: var(--dangerBg);
+        color: var(--danger);
+        border: 1px solid var(--danger);
         border-radius: 14px;
         padding: 14px;
         font-weight: 700;
@@ -338,8 +380,8 @@
     .btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .reschedule-box {
-        background: #352010;
-        border: 1px solid rgba(232,144,106,0.2);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 20px;
         padding: 16px;
         display: flex;
@@ -347,13 +389,13 @@
         gap: 12px;
     }
 
-    .box-title { font-size: 15px; font-weight: 700; color: #F5EDE5; margin: 0; }
+    .box-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 0; }
 
     .glass-input {
         width: 100%;
-        background: rgba(245,237,229,0.07);
-        border: 1px solid rgba(232,144,106,0.2);
-        color: #F5EDE5;
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        color: var(--text);
         border-radius: 14px;
         padding: 13px 15px;
         font-size: 15px;
@@ -364,28 +406,28 @@
     .slots-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .slot {
-        background: rgba(245,237,229,0.06);
-        border: 1px solid rgba(232,144,106,0.2);
+        background: var(--inputBg);
+        border: 1px solid var(--border);
         border-radius: 12px;
         padding: 9px 16px;
-        color: rgba(245,237,229,0.75);
+        color: var(--textSub);
         font-size: 13px;
         font-weight: 600;
         font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
     }
 
-    .slot-active { background: rgba(232,144,106,0.2); border-color: #E8906A; color: #E8906A; }
+    .slot-active { background: var(--mintGlow); border-color: var(--mint); color: var(--mint); }
     .slot-taken { opacity: 0.4; text-decoration: line-through; cursor: not-allowed; }
 
-    .slots-empty { font-size: 13px; color: rgba(245,237,229,0.5); }
+    .slots-empty { font-size: 13px; color: var(--muted); }
 
     .step-nav { display: flex; gap: 10px; margin-top: 4px; }
 
     .btn-back-step {
-        background: rgba(245,237,229,0.07);
-        border: 1px solid rgba(232,144,106,0.2);
-        color: rgba(245,237,229,0.6);
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        color: var(--textSub);
         border-radius: 14px;
         padding: 13px 20px;
         font-size: 14px;
@@ -396,27 +438,27 @@
     }
 
     .error-msg {
-        background: rgba(239,83,80,0.1);
-        border: 1px solid rgba(239,83,80,0.3);
+        background: var(--dangerBg);
+        border: 1px solid var(--danger);
         border-radius: 12px;
         padding: 12px 14px;
         font-size: 13px;
-        color: #EF5350;
+        color: var(--danger);
     }
 
     .toast {
-        background: rgba(111,207,176,0.12);
-        border: 1px solid rgba(111,207,176,0.3);
+        background: var(--okBg);
+        border: 1px solid var(--okBorder);
         border-radius: 12px;
         padding: 12px 14px;
         font-size: 13px;
-        color: #6FCFB0;
+        color: var(--mint);
         margin-bottom: 14px;
     }
 
     .readonly-note {
         font-size: 13px;
-        color: rgba(245,237,229,0.45);
+        color: var(--muted);
         text-align: center;
         padding: 12px;
     }
@@ -427,7 +469,7 @@
         align-items: center;
         gap: 12px;
         padding: 64px 20px;
-        color: rgba(245,237,229,0.4);
+        color: var(--muted);
         text-align: center;
     }
 
