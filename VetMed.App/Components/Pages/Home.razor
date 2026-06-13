@@ -16,7 +16,7 @@
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
             </button>
-            <button class="avatar" @onclick='() => Nav.NavigateTo("/profile")'>@FirstName.Substring(0, 1)</button>
+            <button class="avatar" @onclick='() => Nav.NavigateTo("/profile")'>@(FirstName.Length > 0 ? FirstName[0].ToString() : "?")</button>
         </div>
     </div>
 
@@ -138,7 +138,7 @@
     private bool loading = true;
     private bool loadError;
 
-    private string FirstName => AppState.CurrentOwner?.FullName?.Split(' ')[0] ?? "Użytkowniku";
+    private string FirstName => AppState.CurrentOwner?.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Użytkowniku";
 
     protected override Task OnInitializedAsync() => LoadAsync();
 

@@ -1,4 +1,5 @@
 @page "/"
+@rendermode InteractiveServer
 @attribute [Authorize]
 @inject ClinicService Clinic
 
@@ -111,18 +112,30 @@ else
     private async Task Approve(int id)
     {
         busy = true;
-        await Clinic.ApproveAsync(id);
-        await LoadAsync();
-        busy = false;
+        try
+        {
+            await Clinic.ApproveAsync(id);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
     }
 
     private async Task ConfirmReject(int id)
     {
         busy = true;
-        await Clinic.RejectAsync(id, rejectReason);
-        rejectingId = null;
-        rejectReason = null;
-        await LoadAsync();
-        busy = false;
+        try
+        {
+            await Clinic.RejectAsync(id, rejectReason);
+            rejectingId = null;
+            rejectReason = null;
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
     }
 }

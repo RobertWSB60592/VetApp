@@ -1,0 +1,75 @@
+<mxfile host="app.diagrams.net" modified="2026-06-12T12:00:00.000Z" agent="draw.io" version="24.0.0">
+  <diagram name="Architektura VetMed - GCP" id="vetmed-gcp-arch">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1050" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="gcpFrame" value="Google Cloud Platform  |  projekt: gcp-deploy-492010  |  region: europe-central2 (Warszawa)" style="rounded=0;whiteSpace=wrap;html=1;dashed=1;dashPattern=8 4;strokeColor=#4285F4;strokeWidth=2;fillColor=#F8FAFD;verticalAlign=top;align=left;spacing=12;fontSize=15;fontStyle=1;fontColor=#4285F4;" vertex="1" parent="1">
+          <mxGeometry x="540" y="70" width="1110" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="app" value="&lt;b&gt;VetMed.App (Android)&lt;/b&gt;&lt;br&gt;.NET MAUI Blazor Hybrid&lt;br&gt;aplikacja mobilna właściciela zwierząt&lt;br&gt;wersja 1.1.0 (build 2)" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#5F6368;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="380" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="github" value="&lt;b&gt;GitHub — repozytorium kodu&lt;/b&gt;&lt;br&gt;gałąź produkcyjna: gcp&lt;br&gt;pull requesty, code review" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#5F6368;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="640" width="380" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dev" value="&lt;b&gt;Programista&lt;/b&gt;&lt;br&gt;gcloud CLI (builds submit / run deploy)" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#5F6368;strokeWidth=2;fillColor=#FFFFFF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="830" width="380" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cloudrun" value="&lt;b&gt;Cloud Run — usługa vetmed-api&lt;/b&gt;&lt;br&gt;kontener Docker (ASP.NET Core 9)&lt;br&gt;REST API + JWT, port 8080&lt;br&gt;autoskalowanie 0–N instancji" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#4285F4;strokeWidth=2;fillColor=#E8F0FE;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="640" y="130" width="430" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cloudsql" value="&lt;b&gt;Cloud SQL&lt;/b&gt;&lt;br&gt;PostgreSQL 16&lt;br&gt;instancja vetmed-db (db-f1-micro)&lt;br&gt;baza: vetmed, 10 GB SSD" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#34A853;strokeWidth=2;fillColor=#E6F4EA;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="130" width="380" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="secrets" value="&lt;b&gt;Secret Manager&lt;/b&gt;&lt;br&gt;vetmed-db-password (hasło DB)&lt;br&gt;vetmed-jwt-key (klucz JWT)" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#D93025;strokeWidth=2;fillColor=#FCE8E6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="640" y="400" width="430" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="logging" value="&lt;b&gt;Cloud Logging / Monitoring&lt;/b&gt;&lt;br&gt;logi Serilog z kontenera&lt;br&gt;metryki usługi Cloud Run" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#F4A000;strokeWidth=2;fillColor=#FEF7E0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="400" width="380" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cloudbuild" value="&lt;b&gt;Cloud Build&lt;/b&gt;&lt;br&gt;cloudbuild.yaml&lt;br&gt;docker build wg Dockerfile (multi-stage, .NET 9)" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#F4A000;strokeWidth=2;fillColor=#FEF7E0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="640" y="640" width="430" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="registry" value="&lt;b&gt;Artifact Registry&lt;/b&gt;&lt;br&gt;repozytorium: vetmed&lt;br&gt;obraz: vetmed/api:latest" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#4285F4;strokeWidth=2;fillColor=#E8F0FE;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="640" width="380" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" value="HTTPS / REST + JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4285F4;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="app" target="cloudrun">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="unix socket /cloudsql/&amp;lt;instancja&amp;gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#34A853;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="cloudrun" target="cloudsql">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="sekrety jako zmienne środowiskowe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#D93025;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="secrets" target="cloudrun">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="logi i metryki" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#F4A000;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="cloudrun" target="logging">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="git pull" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5F6368;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="github" target="dev">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="gcloud builds submit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5F6368;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="dev" target="cloudbuild">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="push obrazu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5F6368;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="cloudbuild" target="registry">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="gcloud run deploy (nowa rewizja)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#5F6368;strokeWidth=2;fontSize=11;fontStyle=2;" edge="1" parent="1" source="registry" target="cloudrun">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

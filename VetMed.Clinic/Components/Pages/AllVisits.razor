@@ -1,4 +1,5 @@
 @page "/visits"
+@rendermode InteractiveServer
 @attribute [Authorize]
 @inject ClinicService Clinic
 
@@ -128,10 +129,17 @@ else
     private async Task SaveCompleteAsync(ClinicVisitVm v)
     {
         saving = true;
-        var ok = v.Status == VisitStatus.Zakonczona
-            ? await Clinic.UpdateSummaryAsync(v.Id, summaryText)
-            : await Clinic.CompleteAsync(v.Id, summaryText);
-        saving = false;
+        bool ok;
+        try
+        {
+            ok = v.Status == VisitStatus.Zakonczona
+                ? await Clinic.UpdateSummaryAsync(v.Id, summaryText)
+                : await Clinic.CompleteAsync(v.Id, summaryText);
+        }
+        finally
+        {
+            saving = false;
+        }
 
         if (ok)
         {

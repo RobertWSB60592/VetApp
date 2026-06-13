@@ -175,8 +175,18 @@
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
         moreOpen = false;
-        InvokeAsync(StateHasChanged);
-        _ = Notif.RefreshAsync();
+        _ = InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            try
+            {
+                await Notif.RefreshAsync();
+            }
+            catch
+            {
+                // brak połączenia — ignorujemy odświeżenie licznika
+            }
+        });
     }
 
     public void Dispose()
