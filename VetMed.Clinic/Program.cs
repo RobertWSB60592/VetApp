@@ -15,7 +15,7 @@ var connStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddInfrastructure(connStr);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ClinicService>();
+builder.Services.AddScoped<IClinicService, ClinicService>();
 builder.Services.AddScoped<StaffAuthService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

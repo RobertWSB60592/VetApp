@@ -28,7 +28,7 @@ public record DoctorScheduleVm(
 
 public record ScheduleEntryVm(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
-public sealed class ClinicService
+public sealed class ClinicService : IClinicService
 {
     private readonly AppDbContext _db;
 
