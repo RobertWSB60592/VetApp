@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'europe-central2-docker.pkg.dev/apkavet/vetmed/clinic:latest'
+      - '-f'
+      - 'VetMed.Clinic/Dockerfile'
+      - '.'
+images:
+  - 'europe-central2-docker.pkg.dev/apkavet/vetmed/clinic:latest'

@@ -3,9 +3,9 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'europe-central2-docker.pkg.dev/gcp-deploy-492010/vetmed/api:latest'
+      - 'europe-central2-docker.pkg.dev/apkavet/vetmed/api:latest'
       - '-f'
       - 'Dockerfile'
       - '.'
 images:
-  - 'europe-central2-docker.pkg.dev/gcp-deploy-492010/vetmed/api:latest'
+  - 'europe-central2-docker.pkg.dev/apkavet/vetmed/api:latest'

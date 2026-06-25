@@ -1,0 +1,113 @@
+@startuml VetMed-DiagramKlas
+title VetMed — Diagram klas (model domenowy)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide circle
+
+enum PetSex {
+  Nieznana
+  Samiec
+  Samica
+}
+
+enum VisitType {
+  Szczepienie
+  Kontrola
+  Zabieg
+  Nagly
+  Diagnostyka
+}
+
+enum VisitStatus {
+  Zaplanowana
+  Potwierdzona
+  Zakonczona
+  Odwolana
+  Oczekujaca
+}
+
+class Owner {
+  +int Id
+  +string FullName
+  +string Email
+  +string PasswordHash
+  +string? Phone
+  +DateTime CreatedAt
+}
+
+class Pet {
+  +int Id
+  +string Name
+  +string Species
+  +string? Breed
+  +decimal? WeightKg
+  +DateOnly Born
+  +string? ImageUrl
+  +PetSex Sex
+  +bool Sterilized
+  +string? MicrochipNumber
+  +string? Color
+  +string? Notes
+  +bool IsArchived
+  +int OwnerId
+}
+
+class Doctor {
+  +int Id
+  +string FullName
+  +string Specialization
+  +bool IsAvailable
+}
+
+class DoctorSchedule {
+  +int Id
+  +DayOfWeek DayOfWeek
+  +TimeOnly StartTime
+  +TimeOnly EndTime
+  +int DoctorId
+}
+
+class Visit {
+  +int Id
+  +DateTime ScheduledAt
+  +VisitType Type
+  +VisitStatus Status
+  +string? Notes
+  +string? RejectionReason
+  +string? DoctorSummary
+  +int PetId
+  +int DoctorId
+}
+
+class Vaccination {
+  +int Id
+  +string Name
+  +DateOnly AdministeredOn
+  +DateOnly? NextDueOn
+  +string? Notes
+  +int PetId
+}
+
+class Prescription {
+  +int Id
+  +string Medication
+  +string? Dosage
+  +DateOnly StartsOn
+  +DateOnly? EndsOn
+  +string? Notes
+  +int PetId
+}
+
+Owner "1" *-- "0..*" Pet : posiada >
+Pet "1" *-- "0..*" Visit : ma >
+Pet "1" *-- "0..*" Vaccination : ma >
+Pet "1" *-- "0..*" Prescription : ma >
+Doctor "1" -- "0..*" Visit : prowadzi >
+Doctor "1" *-- "0..*" DoctorSchedule : grafik >
+
+Pet --> PetSex
+Visit --> VisitType
+Visit --> VisitStatus
+
+@enduml

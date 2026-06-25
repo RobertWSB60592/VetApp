@@ -26,7 +26,7 @@ public static class MauiProgram
         // Android emulator: 10.0.2.2 → localhost hosta; fizyczny telefon: IP komputera w sieci
         const string ApiBase = "http://10.0.2.2:5100/";
 #else
-        const string ApiBase = "https://vetmed-api-466028938317.europe-central2.run.app/";
+        const string ApiBase = "https://vetmed-api-x4fdlckhfq-lm.a.run.app/";
 #endif
 
         builder.Services.AddSingleton<ApiClient>(_ =>

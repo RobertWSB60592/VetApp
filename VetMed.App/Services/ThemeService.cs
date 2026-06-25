@@ -17,11 +17,7 @@ public class ThemeService
         _js = js;
         if (_initialized) { await ApplyAsync(); return; }
 
-        try
-        {
-            IsDark = Preferences.Default.Get(PrefKey, "light") == "dark";
-        }
-        catch { IsDark = false; }
+        IsDark = false;
 
         _initialized = true;
         await ApplyAsync();

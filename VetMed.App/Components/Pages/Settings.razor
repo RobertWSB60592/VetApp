@@ -1,5 +1,4 @@
 @page "/settings"
-@inject ThemeService Theme
 @inject AppState AppState
 @inject NavigationManager Nav
 
@@ -13,19 +12,6 @@
         <div>
             <div class="page-title">Ustawienia</div>
             <div class="page-sub">Personalizuj aplikację</div>
-        </div>
-    </div>
-
-    <div class="section-label">Wygląd</div>
-    <div class="card">
-        <div class="row">
-            <div class="row-text">
-                <span class="row-title">Tryb ciemny</span>
-                <span class="row-sub">@(Theme.IsDark ? "Włączony" : "Wyłączony")</span>
-            </div>
-            <button class="switch @(Theme.IsDark ? "switch-on" : "")" @onclick="ToggleTheme">
-                <span class="knob"></span>
-            </button>
         </div>
     </div>
 
@@ -57,16 +43,6 @@
             <button class="switch @(generalNotifs ? "switch-on" : "")" @onclick="() => generalNotifs = !generalNotifs">
                 <span class="knob"></span>
             </button>
-        </div>
-    </div>
-
-    <div class="section-label">Język</div>
-    <div class="card">
-        <div class="row">
-            <div class="lang-chips">
-                <button class="chip @(lang == "pl" ? "chip-active" : "")" @onclick='() => lang = "pl"'>Polski</button>
-                <button class="chip @(lang == "en" ? "chip-active" : "")" @onclick='() => lang = "en"'>English</button>
-            </div>
         </div>
     </div>
 
@@ -110,9 +86,6 @@
     private bool vaccineReminders = true;
     private bool generalNotifs;
     private bool twoFa;
-    private string lang = "pl";
-
-    private async Task ToggleTheme() => await Theme.ToggleAsync();
 
     private void Logout() => AppState.ClearAuth();
 }
@@ -224,24 +197,6 @@
     }
 
     .chev { color: var(--muted); display: flex; }
-
-    .lang-chips { display: flex; gap: 8px; width: 100%; }
-
-    .chip {
-        flex: 1;
-        background: var(--inputBg);
-        border: 1px solid var(--border);
-        color: var(--textSub);
-        border-radius: 12px;
-        padding: 10px;
-        font-size: 14px;
-        font-weight: 600;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-        cursor: pointer;
-        transition: background 0.2s, border-color 0.2s, color 0.2s;
-    }
-
-    .chip-active { background: var(--mintGlow); border-color: var(--mint); color: var(--mint); }
 
     .logout-btn {
         margin-top: 24px;

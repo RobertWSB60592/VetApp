@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using VetMed.Clinic.Components;
 using VetMed.Clinic.Services;
 using VetMed.Infrastructure;
@@ -32,6 +33,15 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, CookieAuthStateProvider>();
 
 var app = builder.Build();
+
+// Za reverse-proxy (Cloud Run) odczytaj oryginalny schemat/host z nagłówków X-Forwarded-*
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedFor
+};
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
 
 if (!app.Environment.IsDevelopment())
 {
@@ -77,4 +87,5 @@ app.MapPost("/auth/logout", async (HttpContext ctx) =>
     return Results.Redirect("/login");
 }).DisableAntiforgery();
 
-app.Run();
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5278";
+app.Run($"http://0.0.0.0:{port}");
