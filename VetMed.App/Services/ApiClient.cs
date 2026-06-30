@@ -10,6 +10,8 @@ public class ApiClient
     private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
     private static readonly JsonSerializerOptions _serializeOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
+    public string? LastError { get; private set; }
+
     public ApiClient(HttpClient httpClient)
     {
         _http = httpClient;
@@ -46,8 +48,6 @@ public class ApiClient
         var json = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<T>(json, _jsonOptions);
     }
-
-    public string? LastError { get; private set; }
 
     public async Task<T?> PatchAsync<T>(string path, object body)
     {

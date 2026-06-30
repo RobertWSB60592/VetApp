@@ -24,4 +24,6 @@ public class Pet
     public Owner Owner { get; set; } = null!;
 
     public ICollection<Visit> Visits { get; set; } = new List<Visit>();
+    public ICollection<Vaccination> Vaccinations { get; set; } = new List<Vaccination>();
+    public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
 }

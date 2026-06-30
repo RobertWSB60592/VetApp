@@ -1,0 +1,141 @@
+@page "/"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject IClinicService Clinic
+
+<PageTitle>Wizyty do zatwierdzenia — VetMed Klinika</PageTitle>
+
+<h1 class="h3 mb-1">Wizyty do zatwierdzenia</h1>
+<p class="text-muted mb-4">Nowe rezerwacje oczekujące na decyzję personelu.</p>
+
+@if (loading)
+{
+    <div class="spinner-border text-success" role="status"></div>
+}
+else if (visits.Count == 0)
+{
+    <div class="alert alert-success">Brak wizyt oczekujących na zatwierdzenie. 🎉</div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        @foreach (var v in visits)
+        {
+            var vid = v.Id;
+            <div class="card shadow-sm" @key="v.Id">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                        <div>
+                            <div class="fs-5 fw-semibold">
+                                <span class="me-1">@ClinicFormat.SpeciesEmoji(v.PetSpecies)</span>
+                                @v.PetName
+                                <span class="text-muted fw-normal">· @ClinicFormat.TypeLabel(v.Type)</span>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                <strong>@v.ScheduledAt.ToString("dddd, dd MMM yyyy · HH:mm")</strong>
+                                &nbsp;•&nbsp; @v.DoctorName
+                            </div>
+                            <div class="small mt-1">
+                                Właściciel: <strong>@v.OwnerName</strong>
+                                @if (!string.IsNullOrWhiteSpace(v.OwnerPhone))
+                                {
+                                    <span>· <a href="tel:@v.OwnerPhone">@v.OwnerPhone</a></span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(v.Notes))
+                            {
+                                <div class="small mt-2 fst-italic text-secondary">„@v.Notes"</div>
+                            }
+                        </div>
+                        <span class="badge @ClinicFormat.StatusBadgeClass(v.Status) align-self-center">@ClinicFormat.StatusLabel(v.Status)</span>
+                    </div>
+
+                    @if (rejectingId == vid)
+                    {
+                        <div class="mt-3 border-top pt-3">
+                            <label class="form-label small">Powód odrzucenia (opcjonalnie)</label>
+                            <textarea class="form-control mb-2" rows="2" @bind="rejectReason"
+                                      placeholder="np. lekarz niedostępny w tym terminie"></textarea>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-danger btn-sm" disabled="@busy" @onclick="() => ConfirmReject(vid)">
+                                    Potwierdź odrzucenie
+                                </button>
+                                <button class="btn btn-light btn-sm" disabled="@busy" @onclick="CancelReject">Anuluj</button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-success btn-sm" disabled="@busy" @onclick="() => Approve(vid)">
+                                ✓ Zatwierdź
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" disabled="@busy" @onclick="() => StartReject(vid)">
+                                ✗ Odrzuć
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ClinicVisitVm> visits = new();
+    private bool loading = true;
+    private bool busy;
+    private int? rejectingId;
+    private string? rejectReason;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        visits = await Clinic.GetPendingAsync();
+        loading = false;
+    }
+
+    private void StartReject(int id)
+    {
+        rejectingId = id;
+        rejectReason = null;
+    }
+
+    private void CancelReject()
+    {
+        rejectingId = null;
+        rejectReason = null;
+    }
+
+    private async Task Approve(int id)
+    {
+        busy = true;
+        try
+        {
+            await Clinic.ApproveAsync(id);
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task ConfirmReject(int id)
+    {
+        busy = true;
+        try
+        {
+            await Clinic.RejectAsync(id, rejectReason);
+            rejectingId = null;
+            rejectReason = null;
+            await LoadAsync();
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+}

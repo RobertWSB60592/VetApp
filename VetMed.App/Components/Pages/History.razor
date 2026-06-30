@@ -12,6 +12,15 @@
     {
         <LoadingSpinner />
     }
+    else if (loadError)
+    {
+        <div class="load-error">
+            <span class="load-error-icon">&#x26A0;&#xFE0F;</span>
+            <span class="load-error-text">Nie udało się wczytać historii</span>
+            <span class="load-error-sub">Sprawdź połączenie i spróbuj ponownie.</span>
+            <button class="retry-btn" @onclick="LoadAsync">Ponów</button>
+        </div>
+    }
     else
     {
         <div class="filter-chips">
@@ -51,6 +60,18 @@
                                 <span class="tl-time">@v.ScheduledAt.ToString("HH:mm")</span>
                                 <span class="status-badge @StatusClass(v.Status)">@StatusLabel(v.Status)</span>
                             </div>
+                            @if (v.Status == VisitStatus.Odwolana && !string.IsNullOrWhiteSpace(v.RejectionReason))
+                            {
+                                <div class="tl-reason">
+                                    <span class="tl-reason-label">Powód odwołania:</span> @v.RejectionReason
+                                </div>
+                            }
+                            @if (v.Status == VisitStatus.Zakonczona && !string.IsNullOrWhiteSpace(v.DoctorSummary))
+                            {
+                                <div class="tl-summary">
+                                    <span class="tl-summary-label">Opis lekarza:</span> @Truncate(v.DoctorSummary)
+                                </div>
+                            }
                         </div>
                     </div>
                 }
@@ -64,10 +85,14 @@
     private List<PetDto> pets = new();
     private int? selectedPetId;
     private bool loading = true;
+    private bool loadError;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
     {
         loading = true;
+        loadError = false;
         try
         {
             var vTask = VisitApi.GetVisitsAsync();
@@ -76,9 +101,12 @@
             visits = vTask.Result.OrderByDescending(v => v.ScheduledAt).ToList();
             pets = pTask.Result;
         }
-        catch { }
+        catch { loadError = true; }
         finally { loading = false; }
     }
+
+    private static string Truncate(string text) =>
+        text.Length <= 120 ? text : text[..120] + "…";
 
     private List<VisitDto> FilteredVisits => selectedPetId.HasValue
         ? visits.Where(v => v.PetId == selectedPetId.Value).ToList()
@@ -86,11 +114,11 @@
 
     private static string VisitColor(VetMed.Shared.Enums.VisitType t) => t switch
     {
-        VetMed.Shared.Enums.VisitType.Szczepienie => "#F5C842",
-        VetMed.Shared.Enums.VisitType.Zabieg      => "#F06292",
-        VetMed.Shared.Enums.VisitType.Diagnostyka => "#64B5F6",
-        VetMed.Shared.Enums.VisitType.Nagly       => "#EF5350",
-        _                                          => "#E8906A"
+        VetMed.Shared.Enums.VisitType.Szczepienie => "var(--vSzczep)",
+        VetMed.Shared.Enums.VisitType.Zabieg      => "var(--vZabieg)",
+        VetMed.Shared.Enums.VisitType.Diagnostyka => "var(--vDiag)",
+        VetMed.Shared.Enums.VisitType.Nagly       => "var(--danger)",
+        _                                          => "var(--vWizyta)"
     };
 
     private static string VisitLabel(VetMed.Shared.Enums.VisitType t) => t switch
@@ -135,7 +163,7 @@
     .page-title {
         font-size: 24px;
         font-weight: 800;
-        color: #F5EDE5;
+        color: var(--text);
     }
 
     .filter-chips {
@@ -150,14 +178,14 @@
     .filter-chips::-webkit-scrollbar { display: none; }
 
     .chip {
-        background: rgba(245,237,229,0.06);
-        border: 1px solid rgba(232,144,106,0.2);
+        background: var(--inputBg);
+        border: 1px solid var(--border);
         border-radius: 20px;
         padding: 8px 16px;
         font-size: 13px;
         font-weight: 600;
         font-family: 'Plus Jakarta Sans', sans-serif;
-        color: rgba(245,237,229,0.55);
+        color: var(--textSub);
         cursor: pointer;
         white-space: nowrap;
         transition: background 0.2s, border-color 0.2s, color 0.2s;
@@ -165,9 +193,9 @@
     }
 
     .chip-active {
-        background: rgba(232,144,106,0.18);
-        border-color: #E8906A;
-        color: #E8906A;
+        background: var(--mintGlow);
+        border-color: var(--mint);
+        color: var(--mint);
     }
 
     .timeline {
@@ -200,17 +228,17 @@
     .tl-line {
         width: 2px;
         flex: 1;
-        background: rgba(232,144,106,0.15);
+        background: var(--border);
         margin-top: 6px;
     }
 
     .tl-card {
         flex: 1;
-        background: #352010;
-        border: 1px solid rgba(232,144,106,0.2);
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 16px;
         padding: 14px 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        box-shadow: var(--cardShadow);
     }
 
     .tl-top {
@@ -229,19 +257,19 @@
 
     .tl-date {
         font-size: 12px;
-        color: rgba(245,237,229,0.4);
+        color: var(--muted);
     }
 
     .tl-pet-name {
         font-size: 15px;
         font-weight: 700;
-        color: #F5EDE5;
+        color: var(--text);
         margin-bottom: 2px;
     }
 
     .tl-doctor {
         font-size: 12px;
-        color: rgba(245,237,229,0.45);
+        color: var(--muted);
         margin-bottom: 10px;
     }
 
@@ -253,7 +281,7 @@
 
     .tl-time {
         font-size: 12px;
-        color: rgba(245,237,229,0.4);
+        color: var(--muted);
     }
 
     .status-badge {
@@ -263,10 +291,36 @@
         padding: 3px 9px;
     }
 
-    .badge-planned   { background: rgba(232,144,106,0.12); color: #E8906A; }
-    .badge-confirmed { background: rgba(100,181,246,0.15); color: #64B5F6; }
-    .badge-done      { background: rgba(245,237,229,0.08); color: rgba(245,237,229,0.5); }
-    .badge-cancelled { background: rgba(239,83,80,0.12);  color: #EF5350; }
+    .tl-reason {
+        margin-top: 10px;
+        padding: 8px 10px;
+        background: var(--dangerBg);
+        border: 1px solid var(--danger);
+        border-radius: 10px;
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .tl-reason-label { color: var(--danger); font-weight: 700; }
+
+    .tl-summary {
+        margin-top: 10px;
+        padding: 8px 10px;
+        background: var(--okBg);
+        border: 1px solid var(--okBorder);
+        border-radius: 10px;
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .tl-summary-label { color: var(--mint); font-weight: 700; }
+
+    .badge-planned   { background: var(--mintGlow); color: var(--mint); }
+    .badge-confirmed { background: var(--vDiagBg); color: var(--vDiag); }
+    .badge-done      { background: var(--faint); color: var(--muted); }
+    .badge-cancelled { background: var(--dangerBg);  color: var(--danger); }
 
     .empty-state {
         display: flex;
@@ -274,7 +328,7 @@
         align-items: center;
         gap: 12px;
         padding: 64px 20px;
-        color: rgba(245,237,229,0.35);
+        color: var(--muted);
         text-align: center;
     }
 

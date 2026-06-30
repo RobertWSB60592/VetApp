@@ -1,0 +1,175 @@
+@page "/visits"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject IClinicService Clinic
+
+<PageTitle>Wszystkie wizyty — VetMed Klinika</PageTitle>
+
+<h1 class="h3 mb-1">Wszystkie wizyty</h1>
+<p class="text-muted mb-4">Przegląd rezerwacji z filtrowaniem po statusie i lekarzu.</p>
+
+<div class="row g-2 mb-3">
+    <div class="col-auto">
+        <select class="form-select form-select-sm" @bind="statusFilter" @bind:after="LoadAsync">
+            <option value="">Wszystkie statusy</option>
+            @foreach (var s in statuses)
+            {
+                <option value="@((int)s)">@ClinicFormat.StatusLabel(s)</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select class="form-select form-select-sm" @bind="doctorFilter" @bind:after="LoadAsync">
+            <option value="">Wszyscy lekarze</option>
+            @foreach (var d in doctors)
+            {
+                <option value="@d.Id">@d.Name</option>
+            }
+        </select>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="spinner-border text-success" role="status"></div>
+}
+else if (visits.Count == 0)
+{
+    <div class="alert alert-light border">Brak wizyt dla wybranych filtrów.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Termin</th>
+                    <th>Zwierzę</th>
+                    <th>Właściciel</th>
+                    <th>Lekarz</th>
+                    <th>Typ</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in visits)
+                {
+                    <tr @key="v.Id">
+                        <td class="text-nowrap">@v.ScheduledAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@ClinicFormat.SpeciesEmoji(v.PetSpecies) @v.PetName</td>
+                        <td>
+                            @v.OwnerName
+                            @if (!string.IsNullOrWhiteSpace(v.OwnerPhone))
+                            {
+                                <div class="small text-muted">@v.OwnerPhone</div>
+                            }
+                        </td>
+                        <td>@v.DoctorName</td>
+                        <td>@ClinicFormat.TypeLabel(v.Type)</td>
+                        <td>
+                            <span class="badge @ClinicFormat.StatusBadgeClass(v.Status)">@ClinicFormat.StatusLabel(v.Status)</span>
+                            @if (v.Status == VisitStatus.Odwolana && !string.IsNullOrWhiteSpace(v.RejectionReason))
+                            {
+                                <div class="small text-muted mt-1">@v.RejectionReason</div>
+                            }
+                            @if (v.Status == VisitStatus.Zakonczona && !string.IsNullOrWhiteSpace(v.DoctorSummary))
+                            {
+                                <div class="small text-muted mt-1">@v.DoctorSummary</div>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (v.Status is VisitStatus.Potwierdzona or VisitStatus.Zaplanowana)
+                            {
+                                <button class="btn btn-outline-success btn-sm" @onclick="() => OpenComplete(v)">Zakończ</button>
+                            }
+                            else if (v.Status == VisitStatus.Zakonczona)
+                            {
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenComplete(v)">Edytuj opis</button>
+                            }
+                        </td>
+                    </tr>
+                    @if (completingId == v.Id)
+                    {
+                        <tr>
+                            <td colspan="7" class="bg-light">
+                                <label class="form-label small mb-1">Opis przebiegu wizyty / zalecenia dla właściciela</label>
+                                <textarea class="form-control form-control-sm mb-2" rows="3" maxlength="2000" @bind="summaryText"
+                                          placeholder="np. Badanie ogólne bez zastrzeżeń. Zalecenia: ..."></textarea>
+                                <button class="btn btn-success btn-sm me-2" @onclick="() => SaveCompleteAsync(v)" disabled="@saving">
+                                    @(v.Status == VisitStatus.Zakonczona ? "Zapisz opis" : "Zakończ wizytę")
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => completingId = null" disabled="@saving">Anuluj</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<ClinicVisitVm> visits = new();
+    private List<(int Id, string Name)> doctors = new();
+    private bool loading = true;
+    private bool saving;
+    private int? completingId;
+    private string summaryText = "";
+
+    private string statusFilter = "";
+    private string doctorFilter = "";
+
+    private void OpenComplete(ClinicVisitVm v)
+    {
+        completingId = v.Id;
+        summaryText = v.DoctorSummary ?? "";
+    }
+
+    private async Task SaveCompleteAsync(ClinicVisitVm v)
+    {
+        saving = true;
+        bool ok;
+        try
+        {
+            ok = v.Status == VisitStatus.Zakonczona
+                ? await Clinic.UpdateSummaryAsync(v.Id, summaryText)
+                : await Clinic.CompleteAsync(v.Id, summaryText);
+        }
+        finally
+        {
+            saving = false;
+        }
+
+        if (ok)
+        {
+            completingId = null;
+            summaryText = "";
+            await LoadAsync();
+        }
+    }
+
+    private static readonly VisitStatus[] statuses =
+    {
+        VisitStatus.Oczekujaca,
+        VisitStatus.Potwierdzona,
+        VisitStatus.Zaplanowana,
+        VisitStatus.Zakonczona,
+        VisitStatus.Odwolana,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        doctors = await Clinic.GetDoctorOptionsAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        VisitStatus? status = int.TryParse(statusFilter, out var s) ? (VisitStatus)s : null;
+        int? doctorId = int.TryParse(doctorFilter, out var d) ? d : null;
+        visits = await Clinic.GetAllAsync(status, doctorId);
+        loading = false;
+    }
+}

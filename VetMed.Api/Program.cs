@@ -27,13 +27,15 @@ try
 
     var app = builder.Build();
 
-    if (app.Environment.IsDevelopment())
+    using (var scope = app.Services.CreateScope())
     {
-        using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
         await DbSeeder.SeedAsync(db, BCrypt.Net.BCrypt.HashPassword);
+    }
 
+    if (app.Environment.IsDevelopment())
+    {
         app.MapOpenApi();
         app.MapScalarApiReference();
     }
@@ -47,7 +49,8 @@ try
 
     app.MapControllers();
 
-    app.Run("http://0.0.0.0:5100");
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "5100";
+    app.Run($"http://0.0.0.0:{port}");
 }
 catch (Exception ex) when (ex is not HostAbortedException)
 {

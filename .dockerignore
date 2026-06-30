@@ -1,0 +1,13 @@
+**/.vs
+**/.vscode
+**/.git
+**/.gitignore
+**/bin
+**/obj
+**/node_modules
+**/*.user
+**/*.dbmdl
+VetMed.App/
+VetMed.Tests/
+docker-compose*
+DEPLOY-GCP.md

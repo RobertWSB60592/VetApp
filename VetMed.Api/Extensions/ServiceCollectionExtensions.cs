@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPetService, PetService>();
         services.AddScoped<IVisitService, VisitService>();
+        services.AddScoped<IHealthService, HealthService>();
 
         services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
 

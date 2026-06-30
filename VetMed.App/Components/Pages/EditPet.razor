@@ -265,74 +265,74 @@
 
     .back-btn {
         width: 40px; height: 40px;
-        background: rgba(26,44,34,0.07);
-        border: 1px solid rgba(60,184,122,0.2);
-        border-radius: 12px; color: #1A2C22;
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        border-radius: 12px; color: var(--text);
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; flex-shrink: 0;
     }
 
-    .page-title { font-size: 20px; font-weight: 800; color: #1A2C22; }
-    .page-sub { font-size: 12px; color: rgba(26,44,34,0.45); margin-top: 2px; }
+    .page-title { font-size: 20px; font-weight: 800; color: var(--text); }
+    .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     .form-wrap { display: flex; flex-direction: column; gap: 18px; }
     .field { display: flex; flex-direction: column; gap: 8px; }
-    .field-label { font-size: 13px; font-weight: 600; color: rgba(26,44,34,0.6); }
+    .field-label { font-size: 13px; font-weight: 600; color: var(--textSub); }
     .required { color: var(--danger); }
 
     .glass-input {
         width: 100%;
-        background: rgba(26,44,34,0.07);
-        border: 1px solid rgba(60,184,122,0.2);
-        color: #1A2C22; border-radius: 14px;
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        color: var(--text); border-radius: 14px;
         padding: 14px 16px; font-size: 15px;
         font-family: 'Plus Jakarta Sans', sans-serif;
         outline: none; transition: border-color 0.2s;
     }
 
-    .glass-input:focus { border-color: rgba(60,184,122,0.6); }
-    .glass-input::placeholder { color: rgba(26,44,34,0.25); }
+    .glass-input:focus { border-color: var(--mint); }
+    .glass-input::placeholder { color: var(--muted); }
     .glass-textarea { resize: vertical; min-height: 70px; }
 
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .chip {
-        background: rgba(26,44,34,0.06);
-        border: 1px solid rgba(60,184,122,0.2);
-        color: rgba(26,44,34,0.6);
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        color: var(--textSub);
         border-radius: 20px; padding: 9px 16px;
         font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
         cursor: pointer;
     }
 
-    .chip-active { background: rgba(60,184,122,0.18); border-color: #3CB87A; color: #3CB87A; font-weight: 700; }
+    .chip-active { background: var(--mintGlow); border-color: var(--mint); color: var(--mint); font-weight: 700; }
 
     .photo-field { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 6px; }
 
     .photo-circle {
         width: 96px; height: 96px; border-radius: 50%;
-        background: rgba(60,184,122,0.1);
-        border: 2px dashed rgba(60,184,122,0.4);
+        background: var(--mintGlow);
+        border: 2px dashed var(--border);
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; overflow: hidden; padding: 0;
     }
 
     .photo-preview { width: 100%; height: 100%; object-fit: cover; }
-    .photo-plus { font-size: 34px; color: rgba(60,184,122,0.7); line-height: 1; }
-    .photo-label { font-size: 12px; color: rgba(26,44,34,0.5); }
+    .photo-plus { font-size: 34px; color: var(--mint); line-height: 1; }
+    .photo-label { font-size: 12px; color: var(--muted); }
 
     .toggle-row { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-    .toggle { width: 20px; height: 20px; accent-color: #3CB87A; cursor: pointer; }
+    .toggle { width: 20px; height: 20px; accent-color: var(--mint); cursor: pointer; }
 
     .error-msg {
-        background: rgba(255,112,112,0.1);
-        border: 1px solid rgba(255,112,112,0.3);
+        background: var(--dangerBg);
+        border: 1px solid var(--danger);
         border-radius: 12px; padding: 12px 14px;
-        font-size: 13px; color: #FF7070;
+        font-size: 13px; color: var(--danger);
     }
 
     .btn-primary {
-        background: #3CB87A; color: #F8FCF9; border: none;
+        background: var(--mint); color: var(--onMint); border: none;
         border-radius: 16px; padding: 15px;
         font-weight: 800; font-size: 15px;
         font-family: 'Plus Jakarta Sans', sans-serif;

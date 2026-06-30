@@ -178,6 +178,78 @@ namespace VetMed.Infrastructure.Migrations
                     b.ToTable("Pets");
                 });
 
+            modelBuilder.Entity("VetMed.Shared.Models.Prescription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Dosage")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateOnly?>("EndsOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Medication")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("PetId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PetId");
+
+                    b.ToTable("Prescriptions");
+                });
+
+            modelBuilder.Entity("VetMed.Shared.Models.Vaccination", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("AdministeredOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly?>("NextDueOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("PetId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NextDueOn");
+
+                    b.HasIndex("PetId");
+
+                    b.ToTable("Vaccinations");
+                });
+
             modelBuilder.Entity("VetMed.Shared.Models.Visit", b =>
                 {
                     b.Property<int>("Id")
@@ -189,12 +261,20 @@ namespace VetMed.Infrastructure.Migrations
                     b.Property<int>("DoctorId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("DoctorSummary")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
                     b.Property<int>("PetId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("timestamptz");
@@ -240,6 +320,28 @@ namespace VetMed.Infrastructure.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("VetMed.Shared.Models.Prescription", b =>
+                {
+                    b.HasOne("VetMed.Shared.Models.Pet", "Pet")
+                        .WithMany("Prescriptions")
+                        .HasForeignKey("PetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pet");
+                });
+
+            modelBuilder.Entity("VetMed.Shared.Models.Vaccination", b =>
+                {
+                    b.HasOne("VetMed.Shared.Models.Pet", "Pet")
+                        .WithMany("Vaccinations")
+                        .HasForeignKey("PetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pet");
+                });
+
             modelBuilder.Entity("VetMed.Shared.Models.Visit", b =>
                 {
                     b.HasOne("VetMed.Shared.Models.Doctor", "Doctor")
@@ -273,6 +375,10 @@ namespace VetMed.Infrastructure.Migrations
 
             modelBuilder.Entity("VetMed.Shared.Models.Pet", b =>
                 {
+                    b.Navigation("Prescriptions");
+
+                    b.Navigation("Vaccinations");
+
                     b.Navigation("Visits");
                 });
 #pragma warning restore 612, 618

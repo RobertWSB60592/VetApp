@@ -1,0 +1,69 @@
+@page "/login"
+@layout EmptyLayout
+
+<PageTitle>Logowanie — VetMed Klinika</PageTitle>
+
+<div class="login-wrap">
+    <form class="login-card" method="post" action="/auth/login" data-enhance="false">
+        <div class="login-brand">VetMed <span>Klinika</span></div>
+        <p class="login-sub">Panel personelu</p>
+
+        @if (ErrorCode is not null)
+        {
+            <div class="alert alert-danger py-2 mb-3">Nieprawidłowy email lub hasło.</div>
+        }
+
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+        <div class="mb-3 text-start">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" name="email" placeholder="admin@vetmed.pl" required autofocus />
+        </div>
+        <div class="mb-4 text-start">
+            <label class="form-label">Hasło</label>
+            <input class="form-control" type="password" name="password" required />
+        </div>
+
+        <button class="btn btn-success w-100" type="submit">Zaloguj się</button>
+    </form>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")] public int? ErrorCode { get; set; }
+    [SupplyParameterFromQuery(Name = "returnUrl")] public string? ReturnUrl { get; set; }
+}
+
+<style>
+    .login-wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4f7f6;
+        padding: 20px;
+    }
+
+    .login-card {
+        width: 100%;
+        max-width: 380px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 36px 32px;
+        box-shadow: 0 12px 40px rgba(26,44,34,0.12);
+        text-align: center;
+    }
+
+    .login-brand {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1A2C22;
+    }
+
+    .login-brand span { color: #2A9A63; }
+
+    .login-sub {
+        color: #6b7a72;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+</style>

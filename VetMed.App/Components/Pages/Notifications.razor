@@ -1,0 +1,293 @@
+@page "/notifications"
+@inject NotificationService Notif
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="notif-page">
+    <div class="page-header">
+        <button class="back-btn" @onclick='() => Nav.NavigateTo("/")'>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+        </button>
+        <div class="header-titles">
+            <div class="page-title">Powiadomienia</div>
+            <div class="page-sub">@(Notif.UnreadCount > 0 ? $"{Notif.UnreadCount} nieprzeczytane" : "Wszystko przeczytane")</div>
+        </div>
+        @if (Notif.UnreadCount > 0)
+        {
+            <button class="mark-all" @onclick="MarkAll">Oznacz wszystkie</button>
+        }
+    </div>
+
+    @if (loading)
+    {
+        <LoadingSpinner />
+    }
+    else if (Notif.Items.Count == 0)
+    {
+        <div class="empty-state">
+            <span class="empty-icon">&#x1F514;</span>
+            <p class="empty-title">Wszystko pod kontrolą!</p>
+            <p class="empty-sub">Nie masz jeszcze żadnych powiadomień.</p>
+        </div>
+    }
+    else
+    {
+        @if (Unread.Count > 0)
+        {
+            <div class="section-label">Nowe</div>
+            <div class="notif-list">
+                @foreach (var n in Unread)
+                {
+                    @NotifCard(n)
+                }
+            </div>
+        }
+
+        @if (Read.Count > 0)
+        {
+            <div class="section-label">Wcześniejsze</div>
+            <div class="notif-list">
+                @foreach (var n in Read)
+                {
+                    @NotifCard(n)
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool loading = true;
+
+    private List<NotificationItem> Unread => Notif.Items.Where(i => !i.Read).ToList();
+    private List<NotificationItem> Read => Notif.Items.Where(i => i.Read).ToList();
+
+    protected override void OnInitialized() => Notif.OnChange += OnNotifChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Notif.RefreshAsync();
+        loading = false;
+    }
+
+    private void OnNotifChanged() => InvokeAsync(StateHasChanged);
+
+    private void MarkAll() => Notif.MarkAllRead();
+
+    private void Open(NotificationItem n)
+    {
+        Notif.MarkRead(n.Key);
+        if (n.Kind == NotificationKind.VaccineDue)
+            Nav.NavigateTo($"/pets/{n.PetId}");
+        else
+            Nav.NavigateTo($"/visits/{n.VisitId}");
+    }
+
+    public void Dispose() => Notif.OnChange -= OnNotifChanged;
+
+    private RenderFragment NotifCard(NotificationItem n) =>
+        @<div class="notif-card @(n.Read ? "" : "notif-unread")" @onclick="() => Open(n)" @key="n.Key">
+            <div class="notif-icon @IconClass(n.Kind)">
+                @if (n.Kind == NotificationKind.Approved)
+                {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                }
+                else if (n.Kind == NotificationKind.Completed)
+                {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                }
+                else if (n.Kind == NotificationKind.Rejected)
+                {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                }
+                else
+                {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                }
+            </div>
+            <div class="notif-body">
+                <div class="notif-title">@Title(n.Kind)</div>
+                @if (n.Kind == NotificationKind.VaccineDue)
+                {
+                    <div class="notif-meta">@n.PetName · termin: @n.ScheduledAt.ToString("dd.MM.yyyy")</div>
+                    <div class="notif-doctor">@n.DoctorName</div>
+                }
+                else
+                {
+                    <div class="notif-meta">@n.PetName · @n.ScheduledAt.ToString("dd.MM.yyyy, HH:mm")</div>
+                    <div class="notif-doctor">@n.DoctorName</div>
+                }
+                @if (n.Kind == NotificationKind.Rejected && !string.IsNullOrWhiteSpace(n.Reason))
+                {
+                    <div class="notif-reason"><span class="nr-label">Powód:</span> @n.Reason</div>
+                }
+                @if (n.Kind == NotificationKind.Completed && !string.IsNullOrWhiteSpace(n.Reason))
+                {
+                    <div class="notif-summary"><span class="ns-label">Zalecenia:</span> @(n.Reason.Length <= 120 ? n.Reason : n.Reason[..120] + "…")</div>
+                }
+            </div>
+            @if (!n.Read)
+            {
+                <span class="unread-dot"></span>
+            }
+        </div>;
+
+    private static string IconClass(NotificationKind k) => k switch
+    {
+        NotificationKind.Approved   => "ic-ok",
+        NotificationKind.Completed  => "ic-ok",
+        NotificationKind.Rejected   => "ic-bad",
+        _                           => "ic-due"
+    };
+
+    private static string Title(NotificationKind k) => k switch
+    {
+        NotificationKind.Approved   => "Wizyta potwierdzona",
+        NotificationKind.Completed  => "Wizyta zakończona — opis od lekarza",
+        NotificationKind.Rejected   => "Wizyta odwołana",
+        _                           => "Zbliża się szczepienie"
+    };
+}
+
+<style>
+    .notif-page {
+        padding: 20px 16px 8px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .page-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 18px;
+        padding-top: 8px;
+    }
+
+    .back-btn {
+        width: 40px;
+        height: 40px;
+        background: var(--inputBg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .header-titles { flex: 1; }
+    .page-title { font-size: 20px; font-weight: 800; color: var(--text); }
+    .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .mark-all {
+        background: var(--mintGlow);
+        border: 1px solid var(--border);
+        color: var(--mint);
+        border-radius: 10px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .section-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin: 14px 4px 10px;
+    }
+
+    .notif-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .notif-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: var(--cardShadow);
+        cursor: pointer;
+        transition: border-color 0.2s, transform 0.12s;
+        position: relative;
+    }
+
+    .notif-card:active { transform: scale(0.99); }
+    .notif-unread { border-color: var(--mint); }
+
+    .notif-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ic-ok { background: var(--okBg); color: var(--mint); }
+    .ic-bad { background: var(--dangerBg); color: var(--danger); }
+    .ic-due { background: var(--vSzczepBg); color: var(--vSzczep); }
+
+    .notif-body { flex: 1; min-width: 0; }
+
+    .notif-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .notif-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .notif-doctor { font-size: 12px; color: var(--textSub); margin-top: 1px; }
+
+    .notif-reason {
+        margin-top: 8px;
+        padding: 7px 9px;
+        background: var(--dangerBg);
+        border-radius: 9px;
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .nr-label { color: var(--danger); font-weight: 700; }
+
+    .notif-summary {
+        margin-top: 8px;
+        padding: 7px 9px;
+        background: var(--okBg);
+        border-radius: 9px;
+        font-size: 12px;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .ns-label { color: var(--mint); font-weight: 700; }
+
+    .unread-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--mint);
+        flex-shrink: 0;
+        margin-top: 4px;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 70px 20px;
+        text-align: center;
+    }
+
+    .empty-icon { font-size: 44px; }
+    .empty-title { font-size: 16px; font-weight: 700; color: var(--text); }
+    .empty-sub { font-size: 13px; color: var(--muted); }
+</style>
