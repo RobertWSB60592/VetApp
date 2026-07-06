@@ -3,10 +3,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace VetMed.Clinic.Services;
 
-/// <summary>
-/// Udostępnia obwodowi Blazor Server tożsamość użytkownika pochodzącą z ciasteczka
-/// uwierzytelniającego (przechwyconą z HttpContext przy starcie obwodu).
-/// </summary>
 public sealed class CookieAuthStateProvider : AuthenticationStateProvider
 {
     private readonly Task<AuthenticationState> _state;

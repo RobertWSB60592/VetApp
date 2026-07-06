@@ -1,6 +1,6 @@
 namespace VetMed.App.Services;
 
-/// <summary>Dane przychodni, do której należy klient. Jedna klinika dla całej aplikacji.</summary>
+
 public static class ClinicInfo
 {
     public const string Name = "VETMED";

@@ -1,6 +1,5 @@
 namespace VetMed.App.Services;
 
-/// <summary>Dobór emoji dla gatunku zwierzęcia podanego jako wolny tekst.</summary>
 public static class PetVisuals
 {
     public static string Emoji(string? species)

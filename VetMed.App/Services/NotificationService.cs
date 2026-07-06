@@ -73,7 +73,6 @@ public class NotificationService
 
         _seen ??= LoadSeen();
 
-        // Pierwsze uruchomienie: oznacz istniejące jako widziane, by nie zalać badge'a.
         if (!Preferences.Default.ContainsKey(SeenKey))
         {
             _seen = sources.Select(s => s.Key).ToHashSet();

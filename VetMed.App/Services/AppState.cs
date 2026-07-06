@@ -64,7 +64,6 @@ public class AppState
                 return false;
             }
 
-            // sprawdź czy token nie wygasł
             var expiry = GetTokenExpiry(token);
             if (expiry is not null && expiry < DateTime.UtcNow)
             {

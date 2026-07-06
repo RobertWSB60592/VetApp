@@ -495,8 +495,7 @@
         {
             var timeParts = selectedTime.Split(':');
             var wallClock = selectedDay.ToDateTime(TimeOnly.MinValue).AddHours(int.Parse(timeParts[0])).AddMinutes(int.Parse(timeParts[1]));
-            // Wysyłamy wybraną godzinę zegarową bez konwersji stref — serwer porównuje ją
-            // wprost z grafikiem lekarza (godziny grafiku są "naiwne"/UTC), tak jak prezentowane sloty.
+            
             var scheduledAt = DateTime.SpecifyKind(wallClock, DateTimeKind.Utc);
 
             var finalNotes = string.IsNullOrWhiteSpace(selectedSubtype)
